@@ -1,0 +1,20 @@
+{
+  "pages": [
+    "pages/index/index"
+  ],
+  "window": {
+    "backgroundColor": "#1D2450",
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#1D2450",
+    "navigationBarTitleText": "羽球掌柜",
+    "navigationBarTextStyle": "white"
+  },
+  "style": "v2",
+  "componentFramework": "glass-easel",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents",
+  "usingComponents": {
+    "van-row": "/dist/row/index",
+    "van-col": "/dist/col/index"
+  }
+}
