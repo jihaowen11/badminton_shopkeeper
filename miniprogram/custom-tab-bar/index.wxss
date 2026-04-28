@@ -1,0 +1,188 @@
+/* 与截图一致的“胶囊 + 中间凸起按钮” */
+.tabbar-root {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  padding-bottom: env(safe-area-inset-bottom);
+  pointer-events: auto;
+}
+
+.tabbar-mask{
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.24);
+  opacity: 0;
+  transition: opacity 220ms cubic-bezier(0.22, 0.9, 0.34, 1);
+  z-index: 998;
+  backdrop-filter: blur(6rpx);
+}
+
+.tabbar-mask.is-open{
+  opacity: 1;
+}
+
+.tabbar-menu{
+  position: fixed;
+  left: 50%;
+  bottom: calc(200rpx + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: 520rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+  z-index: 998;
+  pointer-events: none;
+}
+
+.menu-item{
+  height: 120rpx;
+  background: rgba(255,255,255,0.96);
+  border-radius: 26rpx;
+  box-shadow: 0 18rpx 44rpx rgba(0,0,0,0.16);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 22rpx;
+  padding: 0 28rpx;
+  opacity: 0;
+  transform: translate3d(0, 26rpx, 0) scale(0.96);
+  transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1), opacity 240ms cubic-bezier(0.22, 0.9, 0.34, 1);
+  pointer-events: auto;
+}
+
+.tabbar-menu.is-open .menu-item{
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+.tabbar-menu.is-open .menu-item:nth-child(2){
+  transition-delay: 40ms;
+}
+
+.menu-icon{
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-icon-green{ background: #0a8f3e; }
+.menu-icon-blue{ background: #2f73ff; }
+
+.menu-text{
+  font-size: 30rpx;
+  font-weight: 900;
+  color: rgba(18,22,26,0.88);
+  letter-spacing: 6rpx;
+}
+
+.menu-item.is-anim{
+  animation: menuItemSpin 260ms cubic-bezier(0.22, 0.9, 0.34, 1) both;
+}
+
+.menu-item.is-anim .menu-icon{
+  animation: menuIconPulse 260ms cubic-bezier(0.22, 0.9, 0.34, 1) both;
+}
+
+@keyframes menuItemSpin{
+  0%{ transform: translate3d(0, 0, 0) scale(1) rotate(0deg); filter: saturate(1); }
+  55%{ transform: translate3d(0, -6rpx, 0) scale(1.02) rotate(6deg); filter: saturate(1.25); }
+  100%{ transform: translate3d(0, 0, 0) scale(1) rotate(0deg); filter: saturate(1.05); }
+}
+
+@keyframes menuIconPulse{
+  0%{ transform: rotate(0deg) scale(1); }
+  65%{ transform: rotate(180deg) scale(1.08); }
+  100%{ transform: rotate(360deg) scale(1); }
+}
+
+.tabbar-bg {
+  position: relative;
+  height: 130rpx;
+  padding: 16rpx 24rpx 20rpx;
+  pointer-events: none;
+}
+
+.tabbar-pill {
+  height: 100%;
+  background: #ffffff;
+  border-radius: 25rpx;
+  box-shadow: 0 10rpx 24rpx rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18rpx;
+  pointer-events: auto;
+}
+
+.tabbar-item {
+  height: 102rpx;
+  border-radius: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction:column;
+  gap: 10rpx;
+  color: #8f98a1;
+  font-weight: 600;
+  padding: 0 22rpx;
+  flex: 1;
+}
+
+.tabbar-icon{
+  width: 40rpx;
+}
+
+.tabbar-text {
+  font-size: 24rpx;
+  line-height: 1;
+}
+
+.tabbar-center-space {
+  flex: 1;
+}
+
+.tabbar-item.is-active {
+  color: #0a8f3e;
+  background: #eaf7ee;
+}
+
+.tabbar-fab-wrap {
+  position: absolute;
+  left: 50%;
+  top: 20rpx;
+  transform: translateX(-50%);
+  width: 140rpx;
+  height: 140rpx;
+  pointer-events: none;
+  z-index: 998;
+}
+
+.tabbar-fab {
+  position: absolute;
+  left: 50%;
+  top: -30rpx;
+  transform: translateX(-50%);
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 999rpx;
+  background: #0a8f3e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 16rpx 30rpx rgba(10, 143, 62, 0.4);
+  pointer-events: auto;
+  transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1), background-color 240ms cubic-bezier(0.22, 0.9, 0.34, 1);
+}
+
+.tabbar-fab.is-open{
+  background: #111315;
+  transform: translateX(-50%) rotate(45deg) scale(1.02);
+}

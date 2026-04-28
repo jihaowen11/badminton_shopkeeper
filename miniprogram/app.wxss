@@ -1,25 +1,42 @@
 /**app.wxss**/
+page {
+  --green: #0a8f3e;
+  --green-weak: rgba(10, 143, 62, 0.12);
+  --text: #12161a;
+  --muted: #6c757d;
+}
+
+.home {
+  background-color: #f3faf7;
+  background-image:
+    radial-gradient(900rpx 900rpx at 85% 8%, rgba(60, 231, 165, 0.18), rgba(60, 231, 165, 0) 60%),
+    radial-gradient(700rpx 700rpx at 10% 35%, rgba(60, 231, 165, 0.10), rgba(60, 231, 165, 0) 55%),
+    linear-gradient(180deg, #e9f6f1 0%, #f6fbf9 55%, #ffffff 100%);
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
 .container {
   display: block;
   align-items: center;
   box-sizing: border-box;
   font-size: 30rpx;
-} 
-
-.w-100{
-    width: 100%;
 }
 
-.bg{
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: cover;
+.w-100 {
+  width: 100%;
 }
 
-.t-center{
-    text-align: center;
+.bg {
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
-.pos_r{
-    position: relative;
+.t-center {
+  text-align: center;
+}
+
+.pos_r {
+  position: relative;
 }

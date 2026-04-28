@@ -1,0 +1,202 @@
+<view class="mine {{enter ? 'is-enter' : ''}}">
+  <view class="mine-hero" aria-hidden="true">
+    <view class="mine-hero-ring"></view>
+  </view>
+
+
+  <view class="profile-card enter-item delay-0">
+    <view class="profile-head">
+      <view class="avatar-wrap">
+        <view class="avatar">
+          <image src="/images/noheader.jpg" mode="widthFix"/>
+        </view>
+      </view>
+
+      <view class="profile-main">
+        <view class="name-row">
+          <view class="name">
+            Esccry
+            <image class="sex" src="/images/icon/nan.png" mode="widthFix"/>
+          </view>
+          <van-icon class="edit" name="edit" size="36rpx" color="rgba(18,22,26,0.65)" />
+        </view>
+
+        <view class="meta-row">
+          <view class="pill">进阶球友</view>
+          <view class="join">2024年3月加入</view>
+        </view>
+
+      </view>
+    </view>
+
+    <view class="divider"></view>
+
+    <view class="stats-row">
+      <view class="stat2">
+        <view class="stat2-icon stat2-icon-green">
+          <van-icon name="todo-list" size="44rpx" class="stat-icon" color="#0a8f3e" />
+        </view>
+        <view class="stat2-value">128</view>
+        <view class="stat2-label">总场次</view>
+      </view>
+
+      <view class="stat2">
+        <view class="stat2-icon stat2-icon-orange">
+          <van-icon name="cluster" size="44rpx" class="stat-icon" color="#ff9800" />
+        </view>
+        <view class="stat2-value">89</view>
+        <view class="stat2-label">胜场</view>
+      </view>
+
+      <view class="stat2">
+        <view class="stat2-icon stat2-icon-blue">
+          <van-icon name="award" size="44rpx" class="stat-icon" color="#2f73ff" />
+        </view>
+        <view class="stat2-value">69.5%</view>
+        <view class="stat2-label">胜率</view>
+      </view>
+
+      <view class="stat2">
+        <view class="stat2-icon stat2-icon-red">
+          <van-icon name="fire" size="44rpx" class="stat-icon" color="#ff4d5b" />
+        </view>
+        <view class="stat2-value">7</view>
+        <view class="stat2-label">连胜</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="mine-content">
+    <view class="share-btn enter-item delay-1">
+      <van-icon class="icon" name="smile-o" size="38rpx" color="#ffffff" />
+      <view class="share-text">分享羽球掌柜给好友</view>
+    </view>
+
+    <view class="block enter-item delay-2">
+      <view class="block-head">
+        <view class="block-title">
+          <van-icon class="icon" name="friends-o" size="38rpx" color="#0a8f3e" />
+          <text class="block-title-text">我的俱乐部</text>
+        </view>
+        <view class="block-more">
+          <text class="block-more-text">全部</text>
+          <van-icon name="arrow" size="14" color="#0a8f3e" />
+        </view>
+      </view>
+
+      <view class="club-grid">
+        <view class="club-card">
+          <view class="club-top">
+            <view class="club-name">羽动青春</view>
+            <view class="club-role">管理员</view>
+          </view>
+          <view class="club-bottom">
+            <view class="avatar-stack">
+              <view class="mini-avatar">W</view>
+              <view class="mini-avatar is-2">李</view>
+              <view class="mini-avatar is-3">张</view>
+              <view class="mini-avatar is-4">王</view>
+              <view class="mini-avatar is-more">+28</view>
+            </view>
+            <view class="club-count">32人</view>
+          </view>
+        </view>
+
+        <view class="club-card">
+          <view class="club-top">
+            <view class="club-name">周末羽球群</view>
+            <view class="club-role club-role-member">成员</view>
+          </view>
+          <view class="club-bottom">
+            <view class="avatar-stack">
+              <view class="mini-avatar">飞</view>
+              <view class="mini-avatar is-2">李</view>
+              <view class="mini-avatar is-3">张</view>
+              <view class="mini-avatar is-4">陈</view>
+              <view class="mini-avatar is-more">+14</view>
+            </view>
+            <view class="club-count">18人</view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="block enter-item delay-3">
+      <view class="block-head">
+        <view class="block-title">
+          <van-icon name="trophy-o" size="18" color="#ff9800" />
+          <text class="block-title-text">最近比赛</text>
+        </view>
+        <view class="block-more">
+          <text class="block-more-text">全部记录</text>
+          <van-icon name="arrow" size="14" color="#0a8f3e" />
+        </view>
+      </view>
+
+      <view
+        wx:for="{{matches}}"
+        wx:key="id"
+        class="match-card {{item.result === 'win' ? 'is-win' : 'is-loss'}}"
+      >
+        <view class="match-stripe"></view>
+        <view class="match-head">
+          <view class="match-left">
+            <view class="tag {{item.result === 'win' ? 'tag-win' : 'tag-loss'}}">
+              {{item.result === 'win' ? '胜利' : '失败'}}
+            </view>
+            <view class="match-mode {{item.type === 'double' ? 'is-double' : 'is-single'}}">
+              {{item.type === 'double' ? '双打' : '单打'}}
+            </view>
+          </view>
+          <view class="match-right">
+            <view class="match-time">{{item.timeText}}</view>
+            <view class="match-club">{{item.clubName}}</view>
+          </view>
+        </view>
+
+        <view class="match-body">
+          <view class="side">
+            <view wx:if="{{item.type === 'single'}}" class="player">
+              <view class="player-avatar is-green">{{item.left[0].abbr}}</view>
+              <view class="player-name">{{item.left[0].name}}</view>
+            </view>
+
+            <view wx:else class="team">
+              <view class="team-avatars">
+                <view class="team-avatar is-green">{{item.left[0].abbr}}</view>
+                <view class="team-avatar is-green is-2">{{item.left[1].abbr}}</view>
+              </view>
+              <view class="team-names">
+                <view class="team-name">{{item.left[0].name}}</view>
+                <view class="team-name">{{item.left[1].name}}</view>
+              </view>
+            </view>
+          </view>
+
+          <view class="vs">
+            <view class="vs-text">VS</view>
+            <view class="score">{{item.scoreText}}</view>
+          </view>
+
+          <view class="side side-right">
+            <view wx:if="{{item.type === 'single'}}" class="player player-right">
+              <view class="player-name">{{item.right[0].name}}</view>
+              <view class="player-avatar is-gray">{{item.right[0].abbr}}</view>
+            </view>
+
+            <view wx:else class="team team-right">
+              <view class="team-names team-names-right">
+                <view class="team-name">{{item.right[0].name}}</view>
+                <view class="team-name">{{item.right[1].name}}</view>
+              </view>
+              <view class="team-avatars team-avatars-right">
+                <view class="team-avatar is-gray">{{item.right[0].abbr}}</view>
+                <view class="team-avatar is-gray is-2">{{item.right[1].abbr}}</view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

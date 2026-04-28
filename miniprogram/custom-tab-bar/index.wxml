@@ -1,0 +1,65 @@
+<view class="tabbar-root">
+  <view
+    wx:if="{{menuVisible}}"
+    class="tabbar-mask {{menuOpen ? 'is-open' : ''}}"
+    bindtap="onTapMask"
+  ></view>
+
+  <view wx:if="{{menuVisible}}" class="tabbar-menu {{menuOpen ? 'is-open' : ''}}">
+    <view
+      class="menu-item {{actionAnimating === 'match' ? 'is-anim' : ''}}"
+      data-action="match"
+      bindtap="onTapMenuAction"
+    >
+      <view class="menu-icon menu-icon-green">
+        <van-icon name="notes-o" size="22" color="#ffffff" />
+      </view>
+      <view class="menu-text">新建比赛</view>
+    </view>
+
+    <view
+      class="menu-item {{actionAnimating === 'club' ? 'is-anim' : ''}}"
+      data-action="club"
+      bindtap="onTapMenuAction"
+    >
+      <view class="menu-icon menu-icon-blue">
+        <van-icon name="friends-o" size="22" color="#ffffff" />
+      </view>
+      <view class="menu-text">创建俱乐部</view>
+    </view>
+  </view>
+
+  <view class="tabbar-bg">
+    <view class="tabbar-pill">
+      <view
+        class="tabbar-item {{current === 'home' ? 'is-active' : ''}}"
+        data-key="home"
+        bindtap="onTapItem"
+      >
+        <image wx:if="{{ current === 'home' 
+        }}" class="tabbar-icon" src="/images/icon/yumaoqiu.png" mode="widthFix"/>
+        <image wx:else class="tabbar-icon" src="/images/icon/meun_yumaoqiu.png" mode="widthFix"/>
+        <view class="tabbar-text">首页</view>
+      </view>
+
+      <view class="tabbar-center-space"></view>
+
+      <view
+        class="tabbar-item {{current === 'mine' ? 'is-active' : ''}}"
+        data-key="mine"
+        bindtap="onTapItem"
+      >
+      <image wx:if="{{ current === 'mine' 
+        }}" class="tabbar-icon" src="/images/icon/wode.png" mode="widthFix"/>
+        <image wx:else class="tabbar-icon" src="/images/icon/meun_mine.png" mode="widthFix"/>
+        <view class="tabbar-text">我的</view>
+      </view>
+    </view>
+
+    <view class="tabbar-fab-wrap">
+      <view class="tabbar-fab {{menuOpen ? 'is-open' : ''}}" bind:tap="onTapFab">
+        <van-icon name="plus" size="44rpx" color="#FFFFFF" />
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,4 +1,139 @@
 <!--index.wxml-->
-<view class="container">
- 
+<view class="home {{enter ? 'is-enter' : ''}}">
+  <view class="hero">
+    <view class="hero-top enter-item delay-0">
+      <view class="hero-badge">
+        <van-icon name="fire-o" size="28rpx" color="#008347" />
+      </view>
+      <view class="hero-top-text">羽毛球智能助手</view>
+    </view>
+
+    <view class="hero-title enter-item delay-1">
+      <view class="hero-title-line">羽球</view>
+      <view class="hero-title-line hero-title-accent">掌柜</view>
+    </view>
+
+    <view class="hero-subtitle enter-item delay-2">为球友打造的一站式羽毛球工具</view>
+
+    <view class="stats enter-item delay-3">
+      <view class="stat">
+        <view class="stat-icon">
+          <van-icon class="icon" name="friends-o" size="38rpx" color="#0a8f3e" />
+        </view>
+        <view class="stat-meta">
+          <view class="stat-value">10K+</view>
+          <view class="stat-label">活跃球友</view>
+        </view>
+      </view>
+
+      <view class="stat">
+        <view class="stat-icon">
+          <van-icon class="icon" name="todo-list-o" size="38rpx" color="#0a8f3e" />
+        </view>
+        <view class="stat-meta">
+          <view class="stat-value">50K+</view>
+          <view class="stat-label">场次记录</view>
+        </view>
+      </view>
+
+      <view class="stat">
+        <view class="stat-icon">
+          <van-icon class="icon" name="like-o" size="38rpx" color="#0a8f3e" />
+        </view>
+        <view class="stat-meta">
+          <view class="stat-value">99%</view>
+          <view class="stat-label">好评率</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="hero-decor">
+      <image class="hero-decor-bounce" src="/images/icon/home-icon.png" mode="widthFix"/>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-head enter-item delay-4">
+      <view class="section-title">精选工具</view>
+      <view class="pager-dots" aria-hidden="true">
+        <view class="dot"></view>
+        <view class="dot dot-active"></view>
+        <view class="dot"></view>
+      </view>
+    </view>
+
+    <view class="tool-grid enter-item delay-5">
+      <view class="tool-item">
+        <view class="tool-item-top">
+          <view class="tool-badge" style="background:#0a8f3e;">
+            <van-icon class="icon" name="notes-o" size="44rpx" color="#fff" />
+          </view>
+        </view>
+        <view class="tool-name">计分器</view>
+        <view class="tool-sub">专业比赛计分</view>
+        <view class="tool-watermark tool-watermark-score"></view>
+      </view>
+
+      <view class="tool-item">
+        <view class="tool-item-top">
+          <view class="tool-badge" style="background:#2f73ff;">
+            <van-icon class="icon" name="aim" size="44rpx" color="#fff" />
+          </view>
+        </view>
+        <view class="tool-name">八人转</view>
+        <view class="tool-sub">智能轮转系统</view>
+        <view class="tool-watermark tool-watermark-rotate"></view>
+      </view>
+
+      <view class="tool-item">
+        <view class="tool-item-top">
+          <view class="tool-badge" style="background:#ff9800;">
+            <van-icon class="icon" name="after-sale" size="44rpx" color="#fff" />
+          </view>
+        </view>
+        <view class="tool-name">球费计算</view>
+        <view class="tool-sub">AA制智能分摊</view>
+        <view class="tool-watermark tool-watermark-calc"></view>
+      </view>
+
+      <view class="tool-item">
+        <view class="tool-item-top">
+          <view class="tool-badge" style="background:#8f0a55;">
+            <van-icon class="icon" name="apps-o" size="44rpx" color="#fff" />
+          </view>
+        </view>
+        <view class="tool-name">更多工具</view>
+        <view class="tool-sub">敬请期待</view>
+        <view class="tool-watermark tool-watermark-more"></view>
+      </view>
+    </view>
+
+    <view class="tip-card enter-item delay-6">
+      <view class="tip-left">
+        <view class="tip-icon">
+          <van-icon name="star-o" size="18" color="#0a8f3e" />
+        </view>
+        <view class="tip-meta">
+          <view class="tip-title">今日贴士</view>
+          <view class="tip-text">想要提高步法速度？试试“小碎步”训练，能够显著提升场上灵活性和反应速度。</view>
+        </view>
+      </view>
+      <view class="tip-decor"></view>
+    </view>
+
+    <view class="cta-card enter-item delay-7">
+      <view class="cta-left">
+        <view class="cta-icon">
+          <van-icon name="wap-nav" size="20" color="#ffffff" />
+        </view>
+        <view class="cta-meta">
+          <view class="cta-title">俱乐部</view>
+          <view class="cta-sub">查看/创建我的羽毛球俱乐部</view>
+        </view>
+      </view>
+      <view class="cta-arrow">
+        <van-icon name="arrow" size="18" color="#ffffff" />
+      </view>
+    </view>
+  </view>
 </view>

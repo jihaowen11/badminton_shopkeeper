@@ -1,22 +1,20 @@
-//index.js
-const app = getApp()
-import Dialog from '../../dist/dialog/dialog';
-import Toast from '../../dist/toast/toast';
-
 Page({
   data: {
-    
+    enter: false,
   },
 
-  onLoad: function () {
-    
-  },
-  
-  onShareAppMessage: function (o) {
-    return {
-      title: '与黑夜一同醒来，看清真相者为神',
-      path: '/pages/index/index',
-      imageUrl: '../../images/share_bg.jpg',
+  onShow() {
+    if (typeof this.getTabBar === 'function') {
+      this.getTabBar((tabBar) => {
+        tabBar.setData({
+          current: 'home'
+        })
+      })
     }
+    // 每次进入主页都触发一次入场动画
+    this.setData({ enter: false })
+    setTimeout(() => {
+      this.setData({ enter: true })
+    }, 16)
   },
 })
