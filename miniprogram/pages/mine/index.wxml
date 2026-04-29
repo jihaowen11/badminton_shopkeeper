@@ -78,7 +78,7 @@
           <van-icon class="icon" name="friends-o" size="38rpx" color="#0a8f3e" />
           <text class="block-title-text">我的俱乐部</text>
         </view>
-        <view class="block-more">
+        <view class="block-more" bindtap="onGoClubList" hover-class="block-more-hover">
           <text class="block-more-text">全部</text>
           <van-icon name="arrow" size="14" color="#0a8f3e" />
         </view>

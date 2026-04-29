@@ -2,8 +2,9 @@
   "pages": [
     "pages/index/index",
     "pages/mine/index",
-    "pages/match/create",
-    "pages/club/create"
+    "pages/club/index/index",
+    "pages/club/create/index",
+    "pages/club/details/index"
   ],
   "tabBar": {
     "custom": true,
@@ -27,7 +28,7 @@
     ]
   },
   "window": {
-    "navigationStyle":"custom"
+    "navigationStyle": "custom"
   },
   "style": "v2",
   "componentFramework": "glass-easel",

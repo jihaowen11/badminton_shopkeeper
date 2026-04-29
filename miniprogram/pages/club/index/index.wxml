@@ -1,0 +1,60 @@
+<!--pages/club/index/index.wxml-->
+<view class="page home">
+  <back
+    ext-class="header-back"
+    useScrollMask="{{true}}"
+    scrollTop="{{clubScrollTop}}"
+    maskThreshold="{{30}}"
+  />
+  <view class="header">
+    <view class="header-left">
+      <view class="header-text">
+        <view class="header-title">我的俱乐部</view>
+        <view class="header-sub">已加入 {{joinedCount}} 个俱乐部</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="create-box">
+    <view class="tip-card create-entry" bindtap="onCreate" hover-class="create-entry-hover">
+      <view class="tip-left">
+        <view class="tip-icon">
+          <van-icon class="icon" name="plus" size="18" color="#0a8f3e" />
+        </view>
+        <view class="tip-meta">
+          <view class="tip-title">创建俱乐部</view>
+          <view class="tip-text">发起俱乐部、邀请球友加入，一起在羽球掌柜里组织活动与比赛。</view>
+        </view>
+      </view>
+      <view class="tip-decor"></view>
+    </view>
+  </view>
+
+  <view class="club-scroll">
+    <view wx:for="{{clubs}}" wx:key="id" class="club-card" data-id="{{item.id}}" bindtap="onTapClub" hover-class="club-card-hover">
+      <view class="club-avatar-wrap">
+        <view class="club-avatar">{{item.abbr}}</view>
+        <view wx:if="{{item.isPresident}}" class="club-crown">
+          <van-icon name="gem" size="24rpx" color="#ffffff" />
+        </view>
+      </view>
+      <view class="club-main">
+        <view class="club-name">{{item.name}}</view>
+        <view class="club-meta-col">
+          <view class="meta-row">
+            <van-icon class="icon" name="location-o" size="28rpx" color="rgba(18,22,26,0.38)" />
+            <text class="meta-text">{{item.address}}</text>
+          </view>
+          <view class="meta-row">
+            <van-icon class="icon" name="friends-o" size="28rpx" color="rgba(18,22,26,0.38)" />
+            <text class="meta-text">{{item.memberCount}}人</text>
+          </view>
+        </view>
+      </view>
+      <view class="club-arrow">
+        <van-icon class="icon" name="arrow" size="32rpx" color="rgba(18,22,26,0.35)" />
+      </view>
+    </view>
+
+  </view>
+</view>

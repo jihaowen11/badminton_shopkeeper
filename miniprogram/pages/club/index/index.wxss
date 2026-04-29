@@ -1,0 +1,278 @@
+/* pages/club/index/index.wxss */
+page {
+  --green: #0a8f3e;
+  --text: #12161a;
+}
+
+.page {
+  box-sizing: border-box;
+  min-height: 100%;
+}
+
+.status-bar {
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.header {
+  flex-shrink: 0;
+  padding: 12rpx 28rpx 24rpx;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+  padding-top: 190rpx;
+}
+
+.header-left {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 8rpx;
+}
+
+.header-back {
+  margin-top: 4rpx;
+}
+
+.header-text {
+  flex: 1;
+  min-width: 0;
+  padding-top: 4rpx;
+}
+
+.header-title {
+  font-size: 44rpx;
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.header-sub {
+  margin-top: 10rpx;
+  font-size: 26rpx;
+  color: rgba(18, 22, 26, 0.45);
+  font-weight: 600;
+}
+
+.stats-row {
+  flex-shrink: 0;
+  padding: 0 28rpx 24rpx;
+  display: flex;
+  gap: 22rpx;
+}
+
+.stat-card {
+  flex: 1;
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 28rpx 24rpx 24rpx;
+  box-shadow: 0 10rpx 28rpx rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(18, 22, 26, 0.05);
+}
+
+.stat-icon-wrap {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-icon-wrap-mint {
+  background: rgba(10, 143, 62, 0.12);
+}
+
+.stat-icon-wrap-warm {
+  background: rgba(255, 152, 0, 0.14);
+}
+
+.stat-num {
+  margin-top: 18rpx;
+  font-size: 48rpx;
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1;
+}
+
+.stat-label {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  font-weight: 700;
+  color: rgba(18, 22, 26, 0.45);
+}
+
+.create-box{
+  padding: 0 28rpx 20rpx;
+}
+
+.club-scroll {
+  padding: 0 28rpx 40rpx;
+  box-sizing: border-box;
+}
+
+.club-card {
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 28rpx 24rpx;
+  margin-bottom: 22rpx;
+  box-shadow: 0 5rpx 16rpx rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(18, 22, 26, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 22rpx;
+}
+
+.club-card-hover {
+  opacity: 0.96;
+}
+
+/* 俱乐部卡片统一视觉，不因条目区分颜色 */
+.club-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.club-avatar {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 999rpx;
+  background: rgba(10, 143, 62, 0.14);
+  color: var(--green);
+  font-size: 40rpx;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.club-crown {
+  position: absolute;
+  right: -4rpx;
+  bottom: -2rpx;
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 999rpx;
+  background: #ff9800;
+  border: 4rpx solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6rpx 12rpx rgba(255, 152, 0, 0.35);
+}
+
+.club-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.club-name {
+  font-size: 32rpx;
+  font-weight: 900;
+  color: rgba(18, 22, 26, 0.9);
+  line-height: 1.25;
+  margin-bottom: 12rpx;
+}
+
+.club-meta-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.meta-text {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: rgba(18, 22, 26, 0.45);
+  flex: 1;
+  min-width: 0;
+}
+
+.club-arrow {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 999rpx;
+  background: rgba(18, 22, 26, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* 与首页「今日贴士」同风格的创建入口卡片 */
+.tip-card {
+  margin-top: 26rpx;
+  position: relative;
+  padding: 26rpx 26rpx;
+  border-radius: 28rpx;
+  background:
+    radial-gradient(480rpx 260rpx at 18% 30%, rgba(10, 143, 62, 0.12), rgba(10, 143, 62, 0) 60%),
+    linear-gradient(90deg, rgba(234, 247, 238, 0.92) 0%, rgba(255, 255, 255, 0.70) 70%);
+  border: 1px solid rgba(10, 143, 62, 0.10);
+  overflow: hidden;
+}
+
+.create-entry {
+  margin-bottom: 8rpx;
+}
+
+.create-entry-hover {
+  opacity: 0.94;
+}
+
+.tip-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 16rpx;
+}
+
+.tip-icon {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 18rpx;
+  background: rgba(10, 143, 62, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.tip-title {
+  font-size: 28rpx;
+  font-weight: 900;
+  color: var(--green);
+}
+
+.tip-text {
+  margin-top: 10rpx;
+  font-size: 26rpx;
+  line-height: 1.5;
+  color: rgba(18, 22, 26, 0.65);
+  font-weight: 600;
+}
+
+.tip-decor {
+  position: absolute;
+  right: 18rpx;
+  top: 20rpx;
+  width: 92rpx;
+  height: 92rpx;
+  border-radius: 30rpx;
+  border: 10rpx solid rgba(10, 143, 62, 0.10);
+  transform: rotate(12deg);
+  opacity: 0.55;
+}
+
+.icon{
+  position: relative;
+  top: 4rpx;
+  left: 0rpx;
+}

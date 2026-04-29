@@ -1,0 +1,9 @@
+<view
+  class="back-root back-root--{{variant}} ext-class"
+  style="margin-top: {{marginTopPx}}px;"
+  hover-class="back-root-hover"
+  bindtap="onTap"
+>
+  <view wx:if="{{computedMaskVisible}}" class="back-mask" style="height: {{marginTopPx + 50 }}px;" aria-hidden="true"></view>
+  <van-icon class="icon" name="arrow-left" size="{{iconSize}}" color="{{iconColor}}" />
+</view>

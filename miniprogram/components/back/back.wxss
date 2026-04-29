@@ -1,0 +1,46 @@
+/* 与小程序薄荷绿/白卡风格一致 */
+.back-root {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(10, 143, 62, 0.12);
+  box-shadow: 0 8rpx 20rpx rgba(10, 143, 62, 0.08);
+  margin-left: 30rpx;
+}
+
+.back-mask{
+  position: fixed;
+  left: 0rpx;
+  top: 0rpx;
+  right: 0rpx;
+  width: 100%;
+  background: rgba(18, 22, 26, 0.10);
+  backdrop-filter: blur(10rpx);
+  pointer-events: none;
+}
+
+.back-root-hover {
+  opacity: 0.92;
+}
+
+.back-root--glass {
+  margin-left: 0;
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: none;
+}
+
+.icon{
+  position: relative;
+  top: 4rpx;
+  left: 0;
+}

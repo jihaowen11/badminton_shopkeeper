@@ -40,3 +40,9 @@ page {
 .pos_r {
   position: relative;
 }
+
+.icon{
+  position: relative;
+  top: 4rpx;
+  left: 0;
+}

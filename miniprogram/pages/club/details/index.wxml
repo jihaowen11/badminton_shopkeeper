@@ -1,0 +1,101 @@
+<!--pages/club/details/index.wxml-->
+<view class="page">
+  <back  scrollTop="{{membersScrollTop}}"/>
+
+  <view class="hero-bg" aria-hidden="true">
+    <view class="hero-ring"></view>
+    <view class="hero-ring hero-ring-2"></view>
+  </view>
+
+  <view class="main-card">
+    <view class="club-head-row">
+      <view class="club-avatar-wrap">
+        <view class="club-avatar">{{club.abbr}}</view>
+        <view wx:if="{{club.isPresident}}" class="club-crown">
+          <van-icon class="icon" name="gem" size="12" color="#ffffff" />
+        </view>
+      </view>
+      <view class="club-head-text">
+        <view class="club-title">{{club.name}}</view>
+        <view class="club-line">
+          <van-icon class="icon" name="location-o" size="14" color="rgba(18,22,26,0.45)" />
+          <text class="club-line-text">{{club.location}}</text>
+        </view>
+        <view class="club-line">
+          <van-icon class="icon" name="clock-o" size="14" color="rgba(18,22,26,0.45)" />
+          <text class="club-line-text">{{club.schedule}}</text>
+        </view>
+      </view>
+    </view>
+    <view class="club-desc">{{club.desc}}</view>
+    <view class="stat-mini-row">
+      <view class="stat-mini stat-mini-neutral">
+        <view class="stat-mini-num">{{club.memberTotal}}</view>
+        <view class="stat-mini-label">成员</view>
+      </view>
+      <view class="stat-mini stat-mini-male">
+        <view class="stat-mini-num">{{club.male}}</view>
+        <view class="stat-mini-label">男生</view>
+      </view>
+      <view class="stat-mini stat-mini-female">
+        <view class="stat-mini-num">{{club.female}}</view>
+        <view class="stat-mini-label">女生</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="tabs-wrap">
+    <view class="tabs-bar">
+      <view
+        class="tab-item {{activeTab === 'members' ? 'is-active' : ''}}"
+        bindtap="onTabMembers"
+      >
+        成员 ({{memberCount}})
+      </view>
+      <view
+        class="tab-item {{activeTab === 'feed' ? 'is-active' : ''}}"
+        bindtap="onTabFeed"
+      >
+        动态 ({{feedCount}})
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{activeTab === 'members'}}" class="list-scroll">
+    <view
+      wx:for="{{members}}"
+      wx:key="id"
+      class="member-card"
+    >
+      <view class="member-avatar avatar-{{item.avatarTone}}">{{item.abbr}}</view>
+      <view class="member-main">
+        <view class="member-name-row">
+          <text class="member-name">{{item.name}}</text>
+          <view wx:if="{{item.role === 'president'}}" class="role-pill role-president">会长</view>
+          <view wx:elif="{{item.role === 'admin'}}" class="role-pill role-admin">管理员</view>
+          <view wx:else class="role-pill role-member">成员</view>
+        </view>
+        <view class="member-sub">
+          <image class="sex" wx:if="{{item.gender === 'male'}}" src="/images/icon/nan.png" mode="widthFix"/>
+          <image class="sex" wx:else  src="/images/icon/nv.png" mode="widthFix"/>
+          <text class="member-dot">·</text>
+          <text class="member-level">{{item.level}}</text>
+        </view>
+      </view>
+      <view class="member-more" data-id="{{item.id}}" bindtap="onMemberMore" hover-class="member-more-hover">
+        <van-icon class="icon" name="ellipsis" size="18" color="rgba(18,22,26,0.45)" />
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{activeTab === 'feed'}}" class="feed-placeholder">
+    <van-icon name="chat-o" size="48" color="rgba(10,143,62,0.35)" />
+    <view class="feed-title">动态</view>
+    <view class="feed-desc">俱乐部动态功能开发中，敬请期待。</view>
+  </view>
+
+  <view class="page-footer">
+    <!-- <view class="footer-btn footer-btn-outline" bindtap="onTapAdd" hover-class="footer-btn-hover">新增</view> -->
+    <button class="footer-btn footer-btn-primary footer-share-btn" open-type="share" hover-class="footer-btn-hover-primary">邀请好友加入</button>
+  </view>
+</view>

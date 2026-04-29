@@ -81,4 +81,8 @@ Page({
       this.setData({ enter: true })
     }, 16)
   },
+
+  onGoClubList() {
+    wx.navigateTo({ url: '/pages/club/index/index' })
+  },
 })
