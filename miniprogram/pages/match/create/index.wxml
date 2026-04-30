@@ -1,0 +1,179 @@
+<!--pages/match/create/index.wxml-->
+<view class="page">
+  <back  scrollTop="{{pageScrollTop}}"/>
+
+  <view class="main">
+    <view class="section">
+      <view class="label">组织方式</view>
+      <view class="type-grid mode-grid">
+        <view
+          class="type-card {{mode === 'on' ? 'type-card--on' : ''}}"
+          data-mode="on"
+          bindtap="onSelectMode"
+          hover-class="type-card-hover"
+        >
+          <view class="type-title">现场组织</view>
+          <view class="type-desc">一拍即合到场后临时组局，即刻开始</view>
+        </view>
+        <view
+          class="type-card {{mode === 'pre' ? 'type-card--on' : ''}}"
+          data-mode="pre"
+          bindtap="onSelectMode"
+          hover-class="type-card-hover"
+        >
+          <view class="type-title">预报名</view>
+          <view class="type-desc">提前发布比赛时间与场地，球友报名锁定名额</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="label">比赛名称</view>
+      <input
+        class="name-input"
+        value="{{matchName}}"
+        maxlength="{{nameMax}}"
+        placeholder="例如：4月23日八人转"
+        placeholder-class="name-placeholder"
+        bindinput="onNameInput"
+      />
+      <view class="name-count">{{nameLen}}/{{nameMax}}</view>
+    </view>
+
+    <view class="section">
+      <view class="label">类型</view>
+      <view class="seg-row">
+        <view
+          wx:for="{{matchTypes}}"
+          wx:key="id"
+          class="seg {{selectedTypeIndex === index ? 'seg--on' : ''}}"
+          data-index="{{index}}"
+          bindtap="onSelectType"
+          hover-class="seg-hover"
+        >
+          {{item.title}}
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="label-row">
+        <van-icon class="icon" name="friends-o" size="16" color="#12161a" />
+        <text class="label label-inline">人数</text>
+      </view>
+      <view class="field-row">
+        <view class="field-left">
+          <view class="field-title">参赛人数</view>
+          <view class="field-sub">支持 4-13 人</view>
+        </view>
+        <van-stepper
+          value="{{peopleCount}}"
+          min="4"
+          max="13"
+          integer
+          bind:change="onPeopleChange"
+        />
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="label">场次</view>
+      <view class="seg-row">
+        <view
+          wx:for="{{roundOptions}}"
+          wx:key="value"
+          class="seg {{selectedRound === item.value ? 'seg--on' : ''}}"
+          data-value="{{item.value}}"
+          bindtap="onSelectRound"
+          hover-class="seg-hover"
+        >
+          {{item.label}}
+        </view>
+      </view>
+      <view class="hint">不同人数可选场次不同（按八人转习惯规则生成）</view>
+    </view>
+
+    <view class="section">
+      <view class="label">赛制</view>
+      <view class="seg-row">
+        <view
+          wx:for="{{systems}}"
+          wx:key="id"
+          class="seg {{systemId === item.id ? 'seg--on' : ''}}"
+          data-id="{{item.id}}"
+          bindtap="onSelectSystem"
+          hover-class="seg-hover"
+        >
+          {{item.title}}
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{mode === 'pre'}}" class="section">
+      <view class="label-row">
+        <van-icon class="icon" name="clock-o" size="16" color="#12161a" />
+        <text class="label label-inline">比赛时间</text>
+      </view>
+      <view class="two-col">
+        <picker mode="date" value="{{matchDate}}" bindchange="onPickDate">
+          <view class="picker-field">
+            <text class="{{matchDate ? 'picker-text' : 'picker-placeholder'}}">{{matchDate || '选择日期'}}</text>
+            <van-icon class="icon" name="arrow" size="14" color="rgba(18,22,26,0.35)" />
+          </view>
+        </picker>
+        <picker mode="time" value="{{matchTime}}" bindchange="onPickTime">
+          <view class="picker-field">
+            <text class="{{matchTime ? 'picker-text' : 'picker-placeholder'}}">{{matchTime || '选择时间'}}</text>
+            <van-icon class="icon" name="arrow" size="14" color="rgba(18,22,26,0.35)" />
+          </view>
+        </picker>
+      </view>
+    </view>
+
+    <view wx:if="{{mode === 'pre'}}" class="section">
+      <view class="label-row">
+        <van-icon class="icon" name="location-o" size="16" color="#12161a" />
+        <text class="label label-inline">场地</text>
+      </view>
+      <view class="location-field" bindtap="onTapVenue" hover-class="location-field-hover">
+        <text class="{{venueText ? 'location-text' : 'location-placeholder'}}">{{venueText || '选择或输入场地'}}</text>
+        <van-icon class="icon" name="arrow" size="14" color="rgba(18,22,26,0.35)" />
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="label-row">
+        <van-icon class="icon" name="friends" size="16" color="#12161a" />
+        <text class="label label-inline">俱乐部（可选）</text>
+      </view>
+      <view class="location-field" bindtap="onPickClub" hover-class="location-field-hover">
+        <text class="{{clubText ? 'location-text' : 'location-placeholder'}}">{{clubText || '不关联俱乐部'}}</text>
+        <van-icon class="icon" name="arrow" size="14" color="rgba(18,22,26,0.35)" />
+      </view>
+    </view>
+
+    <view class="bottom-spacer"></view>
+  </view>
+
+  <view class="footer">
+    <view class="btn-create" bindtap="onCreateMatch" hover-class="btn-create-hover">创建比赛</view>
+  </view>
+
+  <view wx:if="{{venueInputVisible}}" class="loc-mask" catchtouchmove="noop">
+    <view class="loc-mask-bg" bindtap="onCloseVenueInput"></view>
+    <view class="loc-panel" catchtap="noop">
+      <view class="loc-panel-title">输入场地</view>
+      <input
+        class="loc-panel-input"
+        value="{{tempVenue}}"
+        placeholder="例如：朝阳体育馆 3 号场"
+        bindinput="onTempVenueInput"
+        focus="{{venueInputVisible}}"
+      />
+      <view class="loc-panel-actions">
+        <view class="loc-btn loc-btn--ghost" bindtap="onCloseVenueInput">取消</view>
+        <view class="loc-btn loc-btn--primary" bindtap="onConfirmVenueInput">确定</view>
+      </view>
+    </view>
+  </view>
+</view>

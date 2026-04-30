@@ -1,0 +1,250 @@
+/* pages/user/info/index.wxss */
+page {
+  --green: #0a8f3e;
+  --text: #12161a;
+  --border: #eeeeee;
+  --muted: rgba(18, 22, 26, 0.45);
+  height: 100%;
+  background: #ffffff;
+}
+
+.page {
+  min-height: 100%;
+  box-sizing: border-box;
+  padding-bottom: calc(128rpx + env(safe-area-inset-bottom));
+}
+
+.main {
+  padding: 24rpx 32rpx 0;
+  margin-top: 100px;
+}
+
+.section {
+  margin-bottom: 28rpx;
+}
+
+.label {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 20rpx;
+}
+
+.label-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 20rpx;
+}
+
+.label-inline {
+  margin-bottom: 0;
+}
+
+.name-input {
+  width: 100%;
+  height: 96rpx;
+  box-sizing: border-box;
+  padding: 0 28rpx;
+  font-size: 30rpx;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 16rpx;
+  background: #fff;
+}
+
+.name-placeholder {
+  color: rgba(18, 22, 26, 0.28);
+}
+
+.profile-card {
+  background: #fff;
+  overflow: hidden;
+}
+
+.avatar-btn {
+  width: 100%;
+  background: #fff;
+  padding: 22rpx 0rpx;
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  box-sizing: border-box;
+  border: none;
+}
+
+.avatar-btn::after {
+  border: none;
+}
+
+.avatar-img,
+.avatar-ph {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 999rpx;
+  flex-shrink: 0;
+  background: rgba(18, 22, 26, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.avatar-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.avatar-title {
+  font-size: 30rpx;
+  font-weight: 900;
+  color: rgba(18, 22, 26, 0.88);
+}
+
+.avatar-sub {
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: rgba(18, 22, 26, 0.45);
+}
+
+.avatar-arrow {
+  flex-shrink: 0;
+}
+
+.line {
+  height: 1px;
+  background: rgba(18, 22, 26, 0.08);
+  margin: 0 22rpx;
+}
+
+.field-col {
+  padding: 22rpx 0rpx 18rpx;
+}
+
+.field-label {
+  font-size: 24rpx;
+  font-weight: 800;
+  color: rgba(18, 22, 26, 0.55);
+  margin-bottom: 14rpx;
+}
+
+.wx-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 22rpx 22rpx;
+  gap: 16rpx;
+}
+
+.wx-tip {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: rgba(18, 22, 26, 0.45);
+}
+
+.wx-btn {
+  padding: 14rpx 18rpx;
+  border-radius: 999rpx;
+  background: rgba(10, 143, 62, 0.10);
+  color: var(--green);
+  font-size: 24rpx;
+  font-weight: 900;
+  border: 1px solid rgba(10, 143, 62, 0.14);
+}
+
+.wx-btn-hover {
+  opacity: 0.92;
+}
+
+.seg-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.seg {
+  padding: 18rpx 24rpx;
+  border: 1px solid var(--border);
+  border-radius: 999rpx;
+  background: #fff;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: rgba(18, 22, 26, 0.78);
+  display: inline-flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.seg--on {
+  border-color: rgba(10, 143, 62, 0.45);
+  background: rgba(10, 143, 62, 0.06);
+  color: rgba(18, 22, 26, 0.88);
+}
+
+.seg-hover {
+  opacity: 0.92;
+}
+
+.gender-ico {
+  width: 28rpx;
+  height: 28rpx;
+  flex-shrink: 0;
+}
+
+.location-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 24rpx;
+  border: 1px solid var(--border);
+  border-radius: 16rpx;
+  background: #fff;
+  gap: 16rpx;
+}
+
+.location-field-hover {
+  opacity: 0.92;
+}
+
+.location-placeholder {
+  flex: 1;
+  font-size: 28rpx;
+  color: rgba(18, 22, 26, 0.28);
+}
+
+.location-text {
+  flex: 1;
+  font-size: 28rpx;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.bottom-spacer {
+  height: 24rpx;
+}
+
+.footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 16rpx 32rpx calc(16rpx + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, #fff 28%);
+  box-sizing: border-box;
+}
+
+.btn-create {
+  height: 96rpx;
+  line-height: 96rpx;
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--green);
+  border-radius: 999rpx;
+}
+
+.btn-create-hover {
+  opacity: 0.9;
+}

@@ -58,7 +58,7 @@
 
     <view class="tabbar-fab-wrap">
       <view class="tabbar-fab {{menuOpen ? 'is-open' : ''}}" bind:tap="onTapFab">
-        <van-icon name="plus" size="44rpx" color="#FFFFFF" />
+        <van-icon class="icon" name="plus" size="44rpx" color="#FFFFFF" />
       </view>
     </view>
   </view>

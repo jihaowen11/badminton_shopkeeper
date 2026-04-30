@@ -1,7 +1,0 @@
-<view style="padding: 36rpx 28rpx;">
-  <view style="font-size: 44rpx; font-weight: 900; color: rgba(18,22,26,0.9);">新建比赛</view>
-  <view style="margin-top: 16rpx; font-size: 28rpx; color: rgba(18,22,26,0.55); font-weight: 700;">
-    这里是占位页，后续接入计分/比赛创建表单。
-  </view>
-</view>
-

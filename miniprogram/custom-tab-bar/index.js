@@ -65,9 +65,9 @@ Component({
       setTimeout(() => {
         this.closeMenu()
         if (action === 'match') {
-          // wx.navigateTo({ url: '/pages/match/create' })
+          wx.navigateTo({ url: '/pages/match/create/index' })
         } else if (action === 'club') {
-          // wx.navigateTo({ url: '/pages/club/create' })
+          wx.navigateTo({url:'/pages/club/create/index'})
         }
       }, 260)
     },

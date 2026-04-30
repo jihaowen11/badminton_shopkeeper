@@ -1,0 +1,108 @@
+<!--pages/user/info/index.wxml-->
+<view class="page">
+  <back  scrollTop="{{pageScrollTop}}"/>
+
+  <view class="main">
+    <view class="section">
+      <view class="label">头像与昵称</view>
+      <view class="profile-card">
+        <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+          <image
+            wx:if="{{avatarUrl}}"
+            class="avatar-img"
+            mode="aspectFill"
+            src="{{avatarUrl}}"
+          />
+          <view wx:else class="avatar-ph">
+            <van-icon name="contact" size="24" color="rgba(18,22,26,0.38)" />
+          </view>
+          <view class="avatar-meta">
+            <view class="avatar-title">头像</view>
+            <view class="avatar-sub">点击获取微信头像</view>
+          </view>
+          <van-icon class="avatar-arrow" name="arrow" size="14" color="rgba(18,22,26,0.35)" />
+        </button>
+
+        <view class="line"></view>
+
+        <view class="field-col">
+          <input
+            class="name-input"
+            value="{{nickName}}"
+            maxlength="20"
+            placeholder="请输入昵称"
+            placeholder-class="name-placeholder"
+            type="nickname"
+            bindinput="onNickInput"
+            bindblur="onNickBlur"
+          />
+        </view>
+
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="label">性别</view>
+      <view class="seg-row">
+        <view
+          wx:for="{{genderOptions}}"
+          wx:key="id"
+          class="seg {{gender === item.id ? 'seg--on' : ''}}"
+          data-id="{{item.id}}"
+          bindtap="onSelectGender"
+          hover-class="seg-hover"
+        >
+          <image class="gender-ico" mode="widthFix" src="{{item.icon}}" />
+          <text>{{item.title}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="label-row">
+        <van-icon class="icon" name="award-o" size="16" color="#12161a" />
+        <text class="label label-inline">羽毛球等级（选填）</text>
+      </view>
+      <picker mode="selector" range="{{levelOptions}}" value="{{levelIndex}}" bindchange="onLevelChange">
+        <view class="location-field" hover-class="location-field-hover">
+          <text class="{{levelText ? 'location-text' : 'location-placeholder'}}">{{levelText || '自评选择等级'}}</text>
+          <van-icon class="icon" name="arrow" size="14" color="rgba(18,22,26,0.35)" />
+        </view>
+      </picker>
+    </view>
+
+    <view class="section">
+      <view class="label">真实姓名（选填）</view>
+      <input
+        class="name-input"
+        value="{{realName}}"
+        maxlength="20"
+        placeholder="请输入真实姓名"
+        placeholder-class="name-placeholder"
+        bindinput="onRealNameInput"
+      />
+    </view>
+
+    <view class="section">
+      <view class="label-row">
+        <van-icon class="icon" name="phone-o" size="16" color="#12161a" />
+        <text class="label label-inline">手机号（选填）</text>
+      </view>
+      <input
+        class="name-input"
+        value="{{phone}}"
+        maxlength="20"
+        placeholder="请输入手机号"
+        placeholder-class="name-placeholder"
+        type="number"
+        bindinput="onPhoneInput"
+      />
+    </view>
+
+    <view class="bottom-spacer"></view>
+  </view>
+
+  <view class="footer">
+    <view class="btn-create" bindtap="onSave" hover-class="btn-create-hover">保存</view>
+  </view>
+</view>

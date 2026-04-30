@@ -63,7 +63,7 @@
     </view>
 
     <view class="tool-grid enter-item delay-5">
-      <view class="tool-item">
+      <view class="tool-item" bind:tap="toScoreboard">
         <view class="tool-item-top">
           <view class="tool-badge" style="background:#0a8f3e;">
             <van-icon class="icon" name="notes-o" size="44rpx" color="#fff" />
@@ -74,7 +74,7 @@
         <view class="tool-watermark tool-watermark-score"></view>
       </view>
 
-      <view class="tool-item">
+      <view class="tool-item" bind:tap="toMatch">
         <view class="tool-item-top">
           <view class="tool-badge" style="background:#2f73ff;">
             <van-icon class="icon" name="aim" size="44rpx" color="#fff" />
@@ -111,7 +111,7 @@
     <view class="tip-card enter-item delay-6">
       <view class="tip-left">
         <view class="tip-icon">
-          <van-icon name="star-o" size="18" color="#0a8f3e" />
+          <van-icon class="icon" name="star-o" size="18" color="#0a8f3e" />
         </view>
         <view class="tip-meta">
           <view class="tip-title">今日贴士</view>
@@ -121,10 +121,10 @@
       <view class="tip-decor"></view>
     </view>
 
-    <view class="cta-card enter-item delay-7">
+    <view class="cta-card enter-item delay-7" bind:tap="toClub">
       <view class="cta-left">
         <view class="cta-icon">
-          <van-icon name="wap-nav" size="20" color="#ffffff" />
+          <van-icon class="icon" name="wap-nav" size="20" color="#ffffff" />
         </view>
         <view class="cta-meta">
           <view class="cta-title">俱乐部</view>
@@ -132,7 +132,7 @@
         </view>
       </view>
       <view class="cta-arrow">
-        <van-icon name="arrow" size="18" color="#ffffff" />
+        <van-icon class="icon" name="arrow" size="18" color="#ffffff" />
       </view>
     </view>
   </view>

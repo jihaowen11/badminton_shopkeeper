@@ -1,1 +1,243 @@
 /* pages/club/create/index.wxss */
+page {
+  --green: #0a8f3e;
+  --text: #12161a;
+  --border: #eeeeee;
+  --muted: rgba(18, 22, 26, 0.45);
+  height: 100%;
+  background: #ffffff;
+}
+
+.page {
+  min-height: 100%;
+  box-sizing: border-box;
+  padding-bottom: calc(128rpx + env(safe-area-inset-bottom));
+}
+
+.main {
+  padding: 24rpx 32rpx 0;
+  margin-top: 100px;
+}
+
+.section {
+  margin-bottom: 28rpx;
+}
+
+.label {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 20rpx;
+}
+
+.label-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 20rpx;
+}
+
+.label-inline {
+  margin-bottom: 0;
+}
+
+.name-input {
+  width: 100%;
+  height: 96rpx;
+  box-sizing: border-box;
+  padding: 0 28rpx;
+  font-size: 30rpx;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 16rpx;
+  background: #fff;
+}
+
+.name-placeholder {
+  color: rgba(18, 22, 26, 0.28);
+}
+
+.name-count {
+  margin-top: 12rpx;
+  text-align: right;
+  font-size: 24rpx;
+  color: var(--muted);
+}
+
+.type-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20rpx;
+}
+
+.type-card {
+  padding: 28rpx 24rpx;
+  border: 1px solid var(--border);
+  border-radius: 16rpx;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.type-card--on {
+  border-color: rgba(10, 143, 62, 0.45);
+  background: rgba(10, 143, 62, 0.06);
+}
+
+.type-card-hover {
+  opacity: 0.92;
+}
+
+.type-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 10rpx;
+}
+
+.type-desc {
+  font-size: 24rpx;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.intro-input {
+  width: 100%;
+  min-height: 200rpx;
+  box-sizing: border-box;
+  padding: 24rpx 28rpx;
+  font-size: 28rpx;
+  color: var(--text);
+  line-height: 1.55;
+  border: 1px solid var(--border);
+  border-radius: 16rpx;
+  background: #fff;
+}
+
+.location-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 24rpx;
+  border: 1px solid var(--border);
+  border-radius: 16rpx;
+  background: #fff;
+  gap: 16rpx;
+}
+
+.location-field-hover {
+  opacity: 0.92;
+}
+
+.location-placeholder {
+  flex: 1;
+  font-size: 28rpx;
+  color: rgba(18, 22, 26, 0.28);
+}
+
+.location-text {
+  flex: 1;
+  font-size: 28rpx;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.bottom-spacer {
+  height: 24rpx;
+}
+
+.footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 16rpx 32rpx calc(16rpx + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, #fff 28%);
+  box-sizing: border-box;
+}
+
+.btn-create {
+  height: 96rpx;
+  line-height: 96rpx;
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--green);
+  border-radius: 999rpx;
+}
+
+.btn-create-hover {
+  opacity: 0.9;
+}
+
+.loc-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.loc-mask-bg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.loc-panel {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  background: #fff;
+  border-radius: 24rpx 24rpx 0 0;
+  padding: 32rpx 32rpx calc(32rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+.loc-panel-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 24rpx;
+}
+
+.loc-panel-input {
+  height: 88rpx;
+  padding: 0 24rpx;
+  border: 1px solid var(--border);
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  margin-bottom: 32rpx;
+}
+
+.loc-panel-actions {
+  display: flex;
+  gap: 24rpx;
+}
+
+.loc-btn {
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  font-size: 30rpx;
+  font-weight: 600;
+  border-radius: 16rpx;
+}
+
+.loc-btn--ghost {
+  background: #f5f6f7;
+  color: var(--text);
+}
+
+.loc-btn--primary {
+  background: var(--green);
+  color: #fff;
+}

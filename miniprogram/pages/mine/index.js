@@ -85,4 +85,12 @@ Page({
   onGoClubList() {
     wx.navigateTo({ url: '/pages/club/index/index' })
   },
+
+  onGoMatchList() {
+    wx.navigateTo({ url: '/pages/match/index/index' })
+  },
+
+  onMyInfo() {
+    wx.navigateTo({ url: '/pages/user/info/index' })
+  },
 })

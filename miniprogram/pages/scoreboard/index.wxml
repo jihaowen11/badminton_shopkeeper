@@ -1,0 +1,82 @@
+<!--pages/scoreboard/index.wxml-->
+<view class="page">
+  <back  scrollTop="{{pageScrollTop}}"/>
+
+  <view class="topbar">
+    <view class="chips">
+      <view class="chip">第{{gameNo}}局</view>
+      <view class="chip" bindtap="onToggleType" hover-class="chip-hover">{{matchTypeText}}</view>
+      <view class="chip" bindtap="onToggleRule" hover-class="chip-hover">{{ruleText}}</view>
+    </view>
+  </view>
+
+  <view class="board">
+    <view
+      class="score-card {{serverSide === 'left' ? 'is-serve' : ''}}"
+      bindtap="onAddPoint"
+      data-side="left"
+      hover-class="score-card-hover"
+    >
+      <view class="serve-pill" wx:if="{{serverSide === 'left'}}">发球</view>
+      <view class="side-title">左方</view>
+      <view class="score {{scoreAnimLeft ? 'is-pop' : ''}}">{{scoreLeft}}</view>
+      <view class="mini-actions">
+        <view class="mini-btn" bindtap="onUndo" data-side="left" catchtap="onUndo" hover-class="mini-btn-hover">-1 纠错</view>
+      </view>
+    </view>
+
+    <view
+      class="score-card {{serverSide === 'right' ? 'is-serve' : ''}}"
+      bindtap="onAddPoint"
+      data-side="right"
+      hover-class="score-card-hover"
+    >
+      <view class="serve-pill" wx:if="{{serverSide === 'right'}}">发球</view>
+      <view class="side-title">右方</view>
+      <view class="score {{scoreAnimRight ? 'is-pop' : ''}}">{{scoreRight}}</view>
+      <view class="mini-actions">
+        <view class="mini-btn" bindtap="onUndo" data-side="right" catchtap="onUndo" hover-class="mini-btn-hover">-1 纠错</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="ops">
+    <view class="op-btn" bindtap="onSwapSides" hover-class="op-btn-hover">
+      <van-icon name="exchange" size="18" color="rgba(18,22,26,0.75)" />
+      <text class="op-text">换边</text>
+    </view>
+    <view class="op-btn" bindtap="onReset" hover-class="op-btn-hover">
+      <van-icon name="close" size="18" color="rgba(18,22,26,0.75)" />
+      <text class="op-text">重置</text>
+    </view>
+  </view>
+
+  <view class="hint-card">
+    <view class="hint-text">点击分数区域加分 · 绿色边框表示发球方</view>
+  </view>
+
+  <view class="records">
+    <view class="records-head">
+      <view class="records-title">最近5场记录</view>
+      <view class="records-actions">
+        <view class="records-btn" bindtap="onClearRecords" hover-class="records-btn-hover">清空</view>
+      </view>
+    </view>
+
+    <view wx:if="{{records.length === 0}}" class="records-empty">
+      暂无记录
+    </view>
+
+    <view
+      wx:for="{{records}}"
+      wx:key="id"
+      class="record-item"
+    >
+      <view class="record-top">
+        <view class="record-name">{{item.title}}</view>
+        <view class="record-score">{{item.scoreLeft}} : {{item.scoreRight}}</view>
+      </view>
+      <view class="record-sub">{{item.timeText}} · {{item.matchTypeText}} · {{item.ruleText}}</view>
+    </view>
+  </view>
+</view>

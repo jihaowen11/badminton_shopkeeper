@@ -1,0 +1,8 @@
+{
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "van-icon": "../../../dist/icon/index",
+    "van-stepper": "../../../dist/stepper/index",
+    "back": "../../../components/back/back"
+  }
+}

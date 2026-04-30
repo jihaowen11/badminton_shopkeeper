@@ -1,3 +1,7 @@
 {
-  "usingComponents": {}
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "van-icon": "../../../dist/icon/index",
+    "back": "../../../components/back/back"
+  }
 }

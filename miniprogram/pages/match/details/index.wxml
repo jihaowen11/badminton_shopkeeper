@@ -1,0 +1,185 @@
+<!--pages/match/details/index.wxml-->
+<view class="page">
+  <back  scrollTop="{{pageScrollTop}}"/>
+
+  <view class="hero-bg" aria-hidden="true">
+    <view class="hero-ring"></view>
+    <view class="hero-ring hero-ring-2"></view>
+  </view>
+
+  <view class="tabs-wrap tabs-wrap--top">
+    <view class="tabs-bar">
+      <view
+        class="tab-item {{activeTab === 'match' ? 'is-active' : ''}}"
+        data-tab="match"
+        bindtap="onTab"
+      >比赛</view>
+      <view
+        class="tab-item {{activeTab === 'pair' ? 'is-active' : ''}}"
+        data-tab="pair"
+        bindtap="onTab"
+      >对阵</view>
+      <view
+        class="tab-item {{activeTab === 'rank' ? 'is-active' : ''}}"
+        data-tab="rank"
+        bindtap="onTab"
+      >排名</view>
+    </view>
+  </view>
+
+  <view wx:if="{{activeTab === 'match'}}" class="tab-panel tab-panel--match">
+    <view class="main-card match-card">
+      <view class="ribbon ribbon--{{match.status}}">{{match.statusText}}</view>
+      <view class="match-title">{{match.title}}</view>
+
+      <view class="info-row">
+        <van-icon class="icon" name="clock-o" size="14" color="rgba(18,22,26,0.45)" />
+        <text class="info-text"><text class="info-k">日期：</text>{{match.dateLine}}</text>
+      </view>
+
+      <view class="info-row info-row--tap" hover-class="info-row-hover">
+        <van-icon class="icon" name="description" size="14" color="rgba(18,22,26,0.45)" />
+        <text class="info-text"><text class="info-k">类型：</text>{{match.typeLine}}</text>
+      </view>
+
+      <view class="info-row">
+        <van-icon class="icon" name="award-o" size="14" color="rgba(18,22,26,0.45)" />
+        <text class="info-text"><text class="info-k">赛制：</text>{{match.formatLine}}</text>
+      </view>
+
+      <view class="info-row">
+        <van-icon class="icon" name="friends-o" size="14" color="rgba(18,22,26,0.45)" />
+        <text class="info-text"><text class="info-k">人数：</text>{{match.peopleLine}}</text>
+      </view>
+
+
+      <view class="match-divider"></view>
+
+      <view class="info-row info-row--tap" bindtap="onTapViews" hover-class="info-row-hover">
+        <text class="info-text info-text--full">浏览量：{{match.views}}</text>
+        <view class="row-end row-end--gap">
+          <view class="new-pill">hot</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="sub-card" bindtap="onTapRegList" hover-class="sub-card-hover">
+      <view class="sub-card-title">已报名：{{match.joined}}/{{match.capacity}}</view>
+      <view class="sub-card-row">
+        <view class="avatar-row">
+          <view
+            wx:for="{{regPreview}}"
+            wx:for-item="reg"
+            wx:key="id"
+            class="mini-avatar mini-avatar--{{reg.tone}}"
+          >{{reg.abbr}}</view>
+        </view>
+        <van-icon class="icon" name="arrow" size="14" color="rgba(18,22,26,0.35)" />
+      </view>
+    </view>
+
+    <view class="sub-card" bindtap="onTapOrganizer" hover-class="sub-card-hover">
+      <view class="org-row">
+        <view class="org-avatar org-avatar--{{organizer.tone}}">{{organizer.abbr}}</view>
+        <text class="org-name">{{organizer.name}}(组织者)</text>
+        <van-icon class="icon org-arrow" name="arrow" size="14" color="rgba(18,22,26,0.35)" />
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{activeTab === 'pair'}}" class="tab-panel tab-panel--list">
+    <view
+      wx:for="{{pairings}}"
+      wx:key="id"
+      class="pair-card"
+    >
+      <view class="pair-main">
+        <view class="pair-team">
+          <view class="pair-avatars">
+            <view
+              wx:for="{{item.leftPlayers}}"
+              wx:for-item="p"
+              wx:key="id"
+              class="pair-avatar-img"
+            >
+              <image class="pair-avatar-img-inner" mode="aspectFill" src="{{p.avatar}}" />
+              <view wx:if="{{p.isMe}}" class="me-pill">我</view>
+            </view>
+          </view>
+          <view class="pair-names">
+            <view class="pair-name-line">{{item.leftNameLine1}}</view>
+            <view class="pair-name-line pair-name-line-sub">{{item.leftNameLine2}}</view>
+          </view>
+        </view>
+
+        <view class="pair-vs">VS</view>
+
+        <view class="pair-team pair-team--right">
+          <view class="pair-avatars">
+            <view
+              wx:for="{{item.rightPlayers}}"
+              wx:for-item="p"
+              wx:key="id"
+              class="pair-avatar-img"
+            >
+              <image class="pair-avatar-img-inner" mode="aspectFill" src="{{p.avatar}}" />
+              <view wx:if="{{p.isMe}}" class="me-pill">我</view>
+            </view>
+          </view>
+          <view class="pair-names pair-names--right">
+            <view class="pair-name-line">{{item.rightNameLine1}}</view>
+            <view class="pair-name-line pair-name-line-sub">{{item.rightNameLine2}}</view>
+          </view>
+        </view>
+      </view>
+
+      <view class="pair-score-panel">
+        <view class="pair-score-round">{{item.roundLabel}}</view>
+        <view class="pair-score-line">
+          <text class="pair-score-num {{item.winSide === 'left' ? 'is-win' : ''}}">{{item.scoreLeft}}</text>
+          <text class="pair-score-sep">：</text>
+          <text class="pair-score-num {{item.winSide === 'right' ? 'is-win' : ''}}">{{item.scoreRight}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{activeTab === 'rank'}}" class="tab-panel tab-panel--list">
+    <view class="rank-card">
+      <view class="rank-head">
+        <text class="rank-col rank-col--w">名次</text>
+        <text class="rank-col rank-col--grow">选手</text>
+        <text class="rank-col rank-col--wl">胜-负</text>
+        <text class="rank-col rank-col--num">净胜</text>
+      </view>
+      <view
+        wx:for="{{rankings}}"
+        wx:key="id"
+        class="rank-row {{item.rank <= 3 ? 'rank-row--top' : ''}}"
+      >
+        <view class="rank-col rank-col--w">
+          <view wx:if="{{item.rank === 1}}" class="medal medal--gold">1</view>
+          <view wx:elif="{{item.rank === 2}}" class="medal medal--silver">2</view>
+          <view wx:elif="{{item.rank === 3}}" class="medal medal--bronze">3</view>
+          <text wx:else class="rank-num">{{item.rank}}</text>
+        </view>
+        <view class="rank-col rank-col--grow rank-name-wrap">
+          <view class="rank-avatar-wrap">
+            <image class="rank-avatar-img" mode="aspectFill" src="{{item.avatar}}" />
+            <view wx:if="{{item.isMe}}" class="me-pill me-pill--small">我</view>
+          </view>
+          <text class="rank-name">{{item.name}}</text>
+        </view>
+        <text class="rank-col rank-col--wl"><text class="wl-a">{{item.win}}</text><text class="wl-sep">-</text><text class="wl-b">{{item.lose}}</text></text>
+        <text class="rank-col rank-col--num">{{item.diff}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="page-footer">
+    <view class="footer-actions">
+      <button class="footer-forward" open-type="share" hover-class="footer-forward-hover">转发</button>
+      <view class="footer-status footer-status--{{match.status}}">{{match.actionText}}</view>
+    </view>
+  </view>
+</view>

@@ -17,4 +17,16 @@ Page({
       this.setData({ enter: true })
     }, 16)
   },
+
+  toClub(){
+    wx.navigateTo({url:'/pages/club/index/index'})
+  },
+
+  toMatch(){
+    wx.navigateTo({url:'/pages/match/create/index'})
+  },
+
+  toScoreboard(){
+    wx.navigateTo({url:'/pages/scoreboard/index'})
+  }
 })

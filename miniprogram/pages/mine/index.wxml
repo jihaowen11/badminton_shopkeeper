@@ -18,7 +18,7 @@
             Esccry
             <image class="sex" src="/images/icon/nan.png" mode="widthFix"/>
           </view>
-          <van-icon class="edit" name="edit" size="36rpx" color="rgba(18,22,26,0.65)" />
+          <van-icon bind:tap="onMyInfo" class="edit" name="edit" size="36rpx" color="rgba(18,22,26,0.65)" />
         </view>
 
         <view class="meta-row">
@@ -127,7 +127,7 @@
           <van-icon name="trophy-o" size="18" color="#ff9800" />
           <text class="block-title-text">最近比赛</text>
         </view>
-        <view class="block-more">
+        <view class="block-more" bind:tap="onGoMatchList">
           <text class="block-more-text">全部记录</text>
           <van-icon name="arrow" size="14" color="#0a8f3e" />
         </view>

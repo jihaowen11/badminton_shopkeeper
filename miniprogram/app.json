@@ -4,7 +4,13 @@
     "pages/mine/index",
     "pages/club/index/index",
     "pages/club/create/index",
-    "pages/club/details/index"
+    "pages/club/details/index",
+    "pages/match/index/index",
+    "pages/match/details/index",
+    "pages/match/create/index",
+    "pages/user/info/index",
+    "pages/user/person/index",
+    "pages/scoreboard/index"
   ],
   "tabBar": {
     "custom": true,
@@ -27,6 +33,14 @@
       }
     ]
   },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于在地图上选择俱乐部常用活动地点"
+    }
+  },
+  "requiredPrivateInfos": [
+    "chooseLocation"
+  ],
   "window": {
     "navigationStyle": "custom"
   },

@@ -1,2 +1,88 @@
 <!--pages/club/create/index.wxml-->
-<text>pages/club/create/index.wxml</text>
+<view class="page">
+  <back  scrollTop="{{membersScrollTop}}"/>
+
+  <view class="main">
+    <view class="section">
+      <view class="label">俱乐部名称</view>
+      <input
+        class="name-input"
+        value="{{clubName}}"
+        maxlength="{{nameMax}}"
+        placeholder="给俱乐部起个响亮的名字"
+        placeholder-class="name-placeholder"
+        bindinput="onNameInput"
+      />
+      <view class="name-count">{{nameLen}}/{{nameMax}}</view>
+    </view>
+
+    <view class="section">
+      <view class="label">俱乐部类型</view>
+      <view class="type-grid">
+        <view
+          wx:for="{{clubTypes}}"
+          wx:key="id"
+          class="type-card {{selectedTypeIndex === index ? 'type-card--on' : ''}}"
+          data-index="{{index}}"
+          bindtap="onSelectType"
+          hover-class="type-card-hover"
+        >
+          <view class="type-title">{{item.title}}</view>
+          <view class="type-desc">{{item.desc}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="label-row">
+        <van-icon class="icon" name="gem-o" size="16" color="#12161a" />
+        <text class="label label-inline">简介</text>
+      </view>
+      <textarea
+        class="intro-input"
+        value="{{intro}}"
+        maxlength="{{introMax}}"
+        placeholder="介绍一下俱乐部活动风格、水平要求等"
+        placeholder-class="name-placeholder"
+        bindinput="onIntroInput"
+        show-confirm-bar="{{false}}"
+      />
+      <view class="name-count">{{introLen}}/{{introMax}}</view>
+    </view>
+
+    <view class="section">
+      <view class="label-row">
+        <van-icon class="icon" name="location-o" size="16" color="#12161a" />
+        <text class="label label-inline">常驻地</text>
+      </view>
+      <view class="location-field" bindtap="onTapLocation" hover-class="location-field-hover">
+        <text class="{{locationText ? 'location-text' : 'location-placeholder'}}">{{locationText || '选择或输入活动地点'}}</text>
+        <van-icon class="icon" name="arrow" size="14" color="rgba(18,22,26,0.35)" />
+      </view>
+    </view>
+
+    <view class="bottom-spacer"></view>
+  </view>
+
+  <view class="footer">
+    <view class="btn-create" bindtap="onCreateClub" hover-class="btn-create-hover">创建俱乐部</view>
+  </view>
+
+  <view wx:if="{{locationInputVisible}}" class="loc-mask" catchtouchmove="noop">
+    <view class="loc-mask-bg" bindtap="onCloseLocationInput"></view>
+    <view class="loc-panel" catchtap="noop">
+      <view class="loc-panel-title">输入活动地点</view>
+      <input
+        class="loc-panel-input"
+        value="{{tempLocation}}"
+        placeholder="例如：朝阳体育馆 3 号场"
+        bindinput="onTempLocationInput"
+        focus="{{locationInputVisible}}"
+      />
+      <view class="loc-panel-actions">
+        <view class="loc-btn loc-btn--ghost" bindtap="onCloseLocationInput">取消</view>
+        <view class="loc-btn loc-btn--primary" bindtap="onConfirmLocationInput">确定</view>
+      </view>
+    </view>
+  </view>
+</view>

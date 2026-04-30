@@ -1,0 +1,75 @@
+<!--pages/match/index/index.wxml-->
+<view class="page home">
+  <back
+    ext-class="header-back"
+    useScrollMask="{{true}}"
+    scrollTop="{{pageScrollTop}}"
+    maskThreshold="{{30}}"
+  />
+
+  <view class="header">
+    <view class="header-left">
+      <view class="header-text">
+        <view class="header-title">我的比赛</view>
+        <view class="header-sub">共 {{totalCount}} 场 · {{filterLabel}}</view>
+      </view>
+    </view>
+    <view class="header-right">
+      <view class="filter-btn" bindtap="onOpenFilter" hover-class="filter-btn-hover">
+        <van-icon class="icon" name="filter-o" size="18" color="rgba(18,22,26,0.72)" />
+        <text class="filter-text">{{filterLabel}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="match-list">
+    <view
+      wx:for="{{matches}}"
+      wx:key="id"
+      class="match-card"
+      data-id="{{item.id}}"
+      bindtap="onTapMatch"
+      hover-class="match-card-hover"
+    >
+      <view class="ribbon ribbon--{{item.status}}">{{item.statusText}}</view>
+      <view class="match-title">{{item.title}}</view>
+
+      <view class="match-row">
+        <van-icon class="icon" name="clock-o" size="16" color="rgba(18,22,26,0.42)" />
+        <text class="match-row-text">{{item.dateText}}</text>
+        <text class="match-row-text match-row-text-muted">{{item.timeText}}</text>
+      </view>
+
+      <view class="match-row">
+        <view class="badge">T</view>
+        <text class="match-row-text">{{item.ruleText}}</text>
+      </view>
+
+      <view class="match-row match-row-bottom">
+        <view class="org">
+          <image class="org-avatar" mode="aspectFill" src="{{item.orgAvatar}}" />
+          <text class="match-row-text">{{item.orgText}}</text>
+        </view>
+      </view>
+
+      <view class="match-foot">
+        <view class="avatar-stack">
+          <image
+            wx:for="{{item.previewAvatars}}"
+            wx:for-item="a"
+            wx:key="index"
+            class="stack-avatar"
+            style="z-index: {{20 - index}}"
+            mode="aspectFill"
+            src="{{a}}"
+          />
+        </view>
+        <view class="meta-right">
+          <text class="meta-text">报名{{item.joined}}/{{item.capacity}}</text>
+          <text class="meta-dot">，</text>
+          <text class="meta-text">浏览{{item.views}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

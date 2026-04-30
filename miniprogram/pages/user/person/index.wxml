@@ -1,0 +1,127 @@
+<!--pages/user/person/index.wxml-->
+<view class="page">
+  <back  scrollTop="{{pageScrollTop}}"/>
+
+  <view class="hero" aria-hidden="true">
+    <view class="hero-ring"></view>
+  </view>
+
+  <view class="profile-card">
+    <view class="profile-head">
+      <view class="avatar-wrap">
+        <view class="avatar">
+          <image class="avatar-img" src="{{user.avatarUrl}}" mode="aspectFill" />
+        </view>
+      </view>
+
+      <view class="profile-main">
+        <view class="name-row">
+          <view class="name">
+            {{user.name}}
+            <image wx:if="{{user.gender === 'male'}}" class="sex" src="/images/icon/nan.png" mode="widthFix" />
+            <image wx:elif="{{user.gender === 'female'}}" class="sex" src="/images/icon/nv.png" mode="widthFix" />
+          </view>
+        </view>
+
+        <view class="meta-row">
+          <view class="pill">{{user.levelText}}</view>
+          <view class="join">{{user.joinText}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="divider"></view>
+
+    <view class="stats-row">
+      <view class="stat2">
+        <view class="stat2-icon stat2-icon-green">
+          <van-icon name="todo-list" size="44rpx" class="stat-icon" color="#0a8f3e" />
+        </view>
+        <view class="stat2-value">{{user.totalMatches}}</view>
+        <view class="stat2-label">总场次</view>
+      </view>
+
+      <view class="stat2">
+        <view class="stat2-icon stat2-icon-blue">
+          <van-icon name="award" size="44rpx" class="stat-icon" color="#2f73ff" />
+        </view>
+        <view class="stat2-value">{{user.winRate}}</view>
+        <view class="stat2-label">胜率</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="block">
+    <view class="block-head">
+      <view class="block-title">
+        <van-icon name="trophy-o" size="18" color="#ff9800" />
+        <text class="block-title-text">最近比赛</text>
+      </view>
+    </view>
+
+    <view
+      wx:for="{{matches}}"
+      wx:key="id"
+      class="match-card {{item.result === 'win' ? 'is-win' : 'is-loss'}}"
+    >
+      <view class="match-stripe"></view>
+      <view class="match-head">
+        <view class="match-left">
+          <view class="tag {{item.result === 'win' ? 'tag-win' : 'tag-loss'}}">
+            {{item.result === 'win' ? '胜利' : '失败'}}
+          </view>
+          <view class="match-mode {{item.type === 'double' ? 'is-double' : 'is-single'}}">
+            {{item.type === 'double' ? '双打' : '单打'}}
+          </view>
+        </view>
+        <view class="match-right">
+          <view class="match-time">{{item.timeText}}</view>
+          <view class="match-club">{{item.clubName}}</view>
+        </view>
+      </view>
+
+      <view class="match-body">
+        <view class="side">
+          <view wx:if="{{item.type === 'single'}}" class="player">
+            <view class="player-avatar is-green">{{item.left[0].abbr}}</view>
+            <view class="player-name">{{item.left[0].name}}</view>
+          </view>
+
+          <view wx:else class="team">
+            <view class="team-avatars">
+              <view class="team-avatar is-green">{{item.left[0].abbr}}</view>
+              <view class="team-avatar is-green is-2">{{item.left[1].abbr}}</view>
+            </view>
+            <view class="team-names">
+              <view class="team-name">{{item.left[0].name}}</view>
+              <view class="team-name">{{item.left[1].name}}</view>
+            </view>
+          </view>
+        </view>
+
+        <view class="vs">
+          <view class="vs-text">VS</view>
+          <view class="score">{{item.scoreText}}</view>
+        </view>
+
+        <view class="side side-right">
+          <view wx:if="{{item.type === 'single'}}" class="player player-right">
+            <view class="player-name">{{item.right[0].name}}</view>
+            <view class="player-avatar is-gray">{{item.right[0].abbr}}</view>
+          </view>
+
+          <view wx:else class="team team-right">
+            <view class="team-names team-names-right">
+              <view class="team-name">{{item.right[0].name}}</view>
+              <view class="team-name">{{item.right[1].name}}</view>
+            </view>
+            <view class="team-avatars team-avatars-right">
+              <view class="team-avatar is-gray">{{item.right[0].abbr}}</view>
+              <view class="team-avatar is-gray is-2">{{item.right[1].abbr}}</view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>
