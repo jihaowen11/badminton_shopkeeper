@@ -10,7 +10,8 @@
     "pages/match/create/index",
     "pages/user/info/index",
     "pages/user/person/index",
-    "pages/scoreboard/index"
+    "pages/scoreboard/index",
+    "pages/cost/index"
   ],
   "tabBar": {
     "custom": true,

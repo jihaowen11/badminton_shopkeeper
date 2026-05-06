@@ -5,8 +5,6 @@
   <view class="topbar">
     <view class="chips">
       <view class="chip">第{{gameNo}}局</view>
-      <view class="chip" bindtap="onToggleType" hover-class="chip-hover">{{matchTypeText}}</view>
-      <view class="chip" bindtap="onToggleRule" hover-class="chip-hover">{{ruleText}}</view>
     </view>
   </view>
 
@@ -21,7 +19,7 @@
       <view class="side-title">左方</view>
       <view class="score {{scoreAnimLeft ? 'is-pop' : ''}}">{{scoreLeft}}</view>
       <view class="mini-actions">
-        <view class="mini-btn" bindtap="onUndo" data-side="left" catchtap="onUndo" hover-class="mini-btn-hover">-1 纠错</view>
+        <view class="mini-btn" catchtap="onUndo" data-side="left" hover-class="mini-btn-hover">-1 纠错</view>
       </view>
     </view>
 
@@ -35,7 +33,7 @@
       <view class="side-title">右方</view>
       <view class="score {{scoreAnimRight ? 'is-pop' : ''}}">{{scoreRight}}</view>
       <view class="mini-actions">
-        <view class="mini-btn" bindtap="onUndo" data-side="right" catchtap="onUndo" hover-class="mini-btn-hover">-1 纠错</view>
+        <view class="mini-btn" catchtap="onUndo" data-side="right" hover-class="mini-btn-hover">-1 纠错</view>
       </view>
     </view>
   </view>
@@ -50,9 +48,12 @@
       <text class="op-text">重置</text>
     </view>
   </view>
+  <view class="ops ops--end">
+    <view class="op-btn op-btn-end" bindtap="onEndMatch">结束本局</view>
+  </view>
 
   <view class="hint-card">
-    <view class="hint-text">点击分数区域加分 · 绿色边框表示发球方</view>
+    <view class="hint-text">点击分数区域加分 · 绿色边框表示发球方 · 「结束本局」会保存比分到下方记录</view>
   </view>
 
   <view class="records">
@@ -76,7 +77,7 @@
         <view class="record-name">{{item.title}}</view>
         <view class="record-score">{{item.scoreLeft}} : {{item.scoreRight}}</view>
       </view>
-      <view class="record-sub">{{item.timeText}} · {{item.matchTypeText}} · {{item.ruleText}}</view>
+      <view class="record-sub">{{item.timeText}}</view>
     </view>
   </view>
 </view>

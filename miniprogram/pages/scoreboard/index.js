@@ -65,7 +65,8 @@ Page({
 
   loadRecords() {
     const records = safeReadRecords().slice(0, 5)
-    this.setData({ records })
+    const gameNo = records.length + 1
+    this.setData({ records, gameNo })
   },
 
   pulse(side) {
@@ -120,7 +121,7 @@ Page({
     const ruleText = `${this.data.rule}分制`
     return {
       id: `${Date.now()}`,
-      title: `${md} · ${matchTypeText}`,
+      title: `${md}`,
       timeText: nowText(),
       matchType: this.data.matchType,
       matchTypeText,
@@ -132,7 +133,7 @@ Page({
   },
 
   saveRecordIfNeeded() {
-    if (this.data.scoreLeft === 0 && this.data.scoreRight === 0) return
+    if (this.data.scoreLeft === 0 && this.data.scoreRight === 0) return null
     const next = [this.buildRecord()].concat(safeReadRecords())
     const dedup = []
     const seen = new Set()
@@ -144,6 +145,24 @@ Page({
     }
     safeWriteRecords(dedup)
     this.setData({ records: dedup })
+    return dedup
+  },
+
+  /** 结束本局：写入记录并进入下一局（分数清零） */
+  onEndMatch() {
+    if (this.data.scoreLeft === 0 && this.data.scoreRight === 0) {
+      wx.showToast({ title: '当前无比分可保存', icon: 'none' })
+      return
+    }
+    const dedup = this.saveRecordIfNeeded()
+    if (!dedup) return
+    this.setData({
+      gameNo: dedup.length + 1,
+      scoreLeft: 0,
+      scoreRight: 0,
+      serverSide: 'left',
+    })
+    wx.showToast({ title: '已保存，进入下一局', icon: 'success' })
   },
 
   onReset() {
@@ -152,15 +171,12 @@ Page({
       return
     }
     wx.showModal({
-      title: '重置计分',
-      content: '是否保存当前对局到记录并重置？',
-      confirmText: '保存并重置',
-      cancelText: '直接重置',
+      title: '重置本局',
+      content: '将清空当前分数与发球状态，不写入记录。需要保存请点「结束本局」。',
+      confirmText: '重置',
+      cancelText: '取消',
       success: (res) => {
-        if (res.confirm) {
-          this.saveRecordIfNeeded()
-          this.setData({ gameNo: this.data.gameNo + 1 })
-        }
+        if (!res.confirm) return
         this.setData({
           scoreLeft: 0,
           scoreRight: 0,
@@ -170,18 +186,6 @@ Page({
     })
   },
 
-  onToggleType() {
-    const next = this.data.matchType === 'double' ? 'single' : 'double'
-    this.setData({ matchType: next })
-    this.refreshTexts()
-  },
-
-  onToggleRule() {
-    const next = this.data.rule === 21 ? 11 : 21
-    this.setData({ rule: next })
-    this.refreshTexts()
-  },
-
   onClearRecords() {
     wx.showModal({
       title: '清空记录',
@@ -189,7 +193,7 @@ Page({
       success: (res) => {
         if (!res.confirm) return
         safeWriteRecords([])
-        this.setData({ records: [] })
+        this.setData({ records: [], gameNo: 1 })
       },
     })
   },

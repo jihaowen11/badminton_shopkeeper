@@ -148,6 +148,13 @@ page {
   box-sizing: border-box;
 }
 
+.ops--end {
+  grid-template-columns: 1fr;
+  padding-top: 18rpx;
+}
+
+
+
 .op-btn {
   height: 92rpx;
   border-radius: 22rpx;
@@ -158,6 +165,15 @@ page {
   align-items: center;
   justify-content: center;
   gap: 14rpx;
+}
+
+.op-btn-end {
+  background: linear-gradient(180deg, #0fb35b 0%, #0a8f3e 100%);
+  border-color: rgba(10, 143, 62, 0.35);
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 900;
+  box-shadow: 0 12rpx 28rpx rgba(10, 143, 62, 0.28);
 }
 
 .op-btn-hover {

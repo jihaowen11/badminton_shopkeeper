@@ -28,5 +28,9 @@ Page({
 
   toScoreboard(){
     wx.navigateTo({url:'/pages/scoreboard/index'})
+  },
+
+  toCost(){
+    wx.navigateTo({url:'/pages/cost/index'})
   }
 })

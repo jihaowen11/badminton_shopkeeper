@@ -85,7 +85,7 @@
         <view class="tool-watermark tool-watermark-rotate"></view>
       </view>
 
-      <view class="tool-item">
+      <view class="tool-item" bind:tap="toCost">
         <view class="tool-item-top">
           <view class="tool-badge" style="background:#ff9800;">
             <van-icon class="icon" name="after-sale" size="44rpx" color="#fff" />
