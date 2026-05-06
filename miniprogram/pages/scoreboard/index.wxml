@@ -40,11 +40,11 @@
 
   <view class="ops">
     <view class="op-btn" bindtap="onSwapSides" hover-class="op-btn-hover">
-      <van-icon name="exchange" size="18" color="rgba(18,22,26,0.75)" />
+      <van-icon class="icon" name="exchange" size="18" color="rgba(18,22,26,0.75)" />
       <text class="op-text">换边</text>
     </view>
     <view class="op-btn" bindtap="onReset" hover-class="op-btn-hover">
-      <van-icon name="close" size="18" color="rgba(18,22,26,0.75)" />
+      <van-icon class="icon" name="close" size="18" color="rgba(18,22,26,0.75)" />
       <text class="op-text">重置</text>
     </view>
   </view>
