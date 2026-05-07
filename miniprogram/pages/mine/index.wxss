@@ -100,6 +100,12 @@ page{
   overflow: hidden;
 }
 
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 .avatar-text{
   font-size: 64rpx;
   font-weight: 900;

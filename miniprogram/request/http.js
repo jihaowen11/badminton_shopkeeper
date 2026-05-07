@@ -1,6 +1,14 @@
-const app = getApp()
-var serverUrl = app.globalData.serverUrl;
 var exceptionAddrArr = []
+
+function getServerBase() {
+  try {
+    const app = getApp()
+    if (app && app.globalData && app.globalData.serverUrl) {
+      return app.globalData.serverUrl
+    }
+  } catch (e) {}
+  return ''
+}
 
 //轻提示
 function showToast(title) {
@@ -50,7 +58,7 @@ function postRequest(url, data) {
   let header = CreateHeader(url, 'POST');
   return new Promise((resolve, reject) => {
     wx.request({
-      url: serverUrl + url,
+      url: getServerBase() + url,
       data: data,
       header: header,
       method: 'POST',
@@ -85,7 +93,7 @@ function getRequest(url, data) {
   let header = CreateHeader(url, 'GET');
   return new Promise((resolve, reject) => {
     wx.request({
-      url: serverUrl + url,
+      url: getServerBase() + url,
       data: data,
       header: header,
       method: 'GET',
@@ -123,7 +131,7 @@ function uploadFile(url, filePath, data) {
       header: header,
       name: 'file',
       formData: data || '',
-      url: serverUrl + url,
+      url: getServerBase() + url,
       success: (res => {
         if (res.statusCode === 200) {
           //200: 服务端业务处理正常结束

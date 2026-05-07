@@ -1,4 +1,6 @@
 //app.js
+const { GET_OPENID, FIND_USER } = require('./request/api')
+
 App({
   onLaunch: function () {
     let _this = this;
@@ -6,8 +8,8 @@ App({
     this.globalData = {
         openid:'',
         userInfo:{},
-        serverUrl: "https://esccry.top/api/werewolf",
-        staticUrl: "https://esccry.top/api/werewolf/images",
+        serverUrl: "http://192.168.80.107:3000",
+        staticUrl: "http://192.168.80.107:3000/images",
         code:'v0.9',
         dicts: {
           isAd: true,
@@ -42,5 +44,27 @@ App({
             return str;
         }
     }
-  }
+
+    wx.login({
+      success: (loginRes) => {
+        if (!loginRes.code) return
+        GET_OPENID({ code: loginRes.code })
+          .then((obj) => {
+            const openid =
+              typeof obj === 'string'
+                ? obj
+                : obj && (obj.openid || obj.openId || obj.openID)
+            if (!openid) return Promise.resolve(null)
+            this.globalData.openid = openid
+            return FIND_USER({ openId: openid })
+          })
+          .then((user) => {
+            if (user != null && typeof user === 'object') {
+              this.globalData.userInfo = user
+            }
+          })
+          .catch(() => {})
+      },
+    })
+  },
 })

@@ -1,7 +1,51 @@
+const DEFAULT_AVATAR = '/images/noheader.jpg'
+
+function formatJoinDate(createdAt) {
+  if (createdAt == null || createdAt === '') return ''
+  const raw = typeof createdAt === 'number' && createdAt < 1e12 ? createdAt * 1000 : createdAt
+  const d = new Date(raw)
+  if (Number.isNaN(d.getTime())) return ''
+  return `${d.getFullYear()}年${d.getMonth() + 1}月加入`
+}
+
+function mapUserToView(user) {
+  if (!user || typeof user !== 'object') {
+    return {
+      userAvatar: DEFAULT_AVATAR,
+      userNickName: '未登录',
+      userGender: 0,
+      userLevel: '未定级',
+      userJoinText: '',
+    }
+  }
+  const avatar =
+    user.avatar && String(user.avatar).trim() ? String(user.avatar).trim() : DEFAULT_AVATAR
+  const nick =
+    user.nickName && String(user.nickName).trim() ? String(user.nickName).trim() : '未命名'
+  const g = Number(user.gender)
+  const userGender = g === 1 || g === 2 ? g : 0
+  const level =
+    user.badmintonLevel != null && String(user.badmintonLevel).trim() !== ''
+      ? String(user.badmintonLevel).trim()
+      : '未定级'
+  const userJoinText = formatJoinDate(user.createdAt)
+  return {
+    userAvatar: avatar,
+    userNickName: nick,
+    userGender,
+    userLevel: level,
+    userJoinText,
+  }
+}
 
 Page({
   data: {
     enter: false,
+    userAvatar: DEFAULT_AVATAR,
+    userNickName: '未登录',
+    userGender: 0,
+    userLevel: '未定级',
+    userJoinText: '',
     matches: [
       {
         id: 'm1',
@@ -68,7 +112,14 @@ Page({
     ],
   },
 
+  syncUserFromGlobal() {
+    const app = getApp()
+    const user = (app && app.globalData && app.globalData.userInfo) || {}
+    this.setData(mapUserToView(user))
+  },
+
   onShow() {
+    this.syncUserFromGlobal()
     if (typeof this.getTabBar === 'function') {
       this.getTabBar((tabBar) => {
         tabBar.setData({

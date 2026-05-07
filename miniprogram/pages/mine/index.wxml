@@ -8,22 +8,23 @@
     <view class="profile-head">
       <view class="avatar-wrap">
         <view class="avatar">
-          <image src="/images/noheader.jpg" mode="widthFix"/>
+          <image class="avatar-img" src="{{userAvatar}}" mode="aspectFill" />
         </view>
       </view>
 
       <view class="profile-main">
         <view class="name-row">
           <view class="name">
-            Esccry
-            <image class="sex" src="/images/icon/nan.png" mode="widthFix"/>
+            {{userNickName}}
+            <image wx:if="{{userGender === 1}}" class="sex" src="/images/icon/nan.png" mode="widthFix" />
+            <image wx:elif="{{userGender === 2}}" class="sex" src="/images/icon/nv.png" mode="widthFix" />
           </view>
           <van-icon bind:tap="onMyInfo" class="edit" name="edit" size="36rpx" color="rgba(18,22,26,0.65)" />
         </view>
 
         <view class="meta-row">
-          <view class="pill">进阶球友</view>
-          <view class="join">2024年3月加入</view>
+          <view class="pill">{{userLevel}}</view>
+          <view wx:if="{{userJoinText}}" class="join">{{userJoinText}}</view>
         </view>
 
       </view>

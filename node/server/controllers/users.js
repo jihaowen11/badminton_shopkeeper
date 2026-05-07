@@ -2,8 +2,18 @@ const axios = require('axios');
 const UserModel = require("../modules/users");
 const R = require("../utils/responseBeautifier")
 
-const appId = 'wx24ffbfbbbeb6c899';
-const appSecret = 'e0f37305a3311d52e29ac7ce2921c7e1';
+function randomUsername(prefix = "", length = 8) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let username = prefix;
+    for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * chars.length);
+        username += chars[randomIndex];
+    }
+    return username;
+}
+
+const appId = 'wxbd77ad3a1bd4ad03';
+const appSecret = '1ef4225fb6b838b3e0dcf40022a2730b';
 
 class UserController {
     static async create(ctx) {
@@ -61,7 +71,15 @@ class UserController {
         let req = ctx.request.body;
         if (req.openId) {
             try {
-                const object = await UserModel.detailByOpenId(req.openId);
+                let object = await UserModel.detailByOpenId(req.openId);
+                if (!object) {
+                    const nickName = randomUsername('羽球人_', 6);
+                    const ret = await UserModel.create({
+                        openId: req.openId,
+                        nickName
+                    });
+                    object = await UserModel.detail(ret.id);
+                }
                 ctx.body = R.set(object, 200);
             } catch (err) {
                 ctx.body = R.error(412, err);
