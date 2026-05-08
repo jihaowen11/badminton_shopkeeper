@@ -1,34 +1,70 @@
 // pages/club/index/index.js
+const { CLUB_MY_LIST } = require('../../../request/api')
+
+function toDisplayName(name) {
+  const text = name == null ? '' : String(name).trim()
+  return text || '未知'
+}
+
+function toAbbr(name) {
+  return toDisplayName(name).slice(0, 1).toUpperCase()
+}
+
+function toAvatarUrl(rawAvatar) {
+  const path = rawAvatar == null ? '' : String(rawAvatar).trim()
+  if (!path) return ''
+  try {
+    const app = getApp()
+    if (app && app.fun && typeof app.fun.joinStaticUrl === 'function') {
+      return app.fun.joinStaticUrl(path)
+    }
+  } catch (e) {}
+  return path
+}
+
+function pickOpenId() {
+  try {
+    const app = getApp()
+    const gd = (app && app.globalData) || {}
+    return (
+      (gd.openid && String(gd.openid).trim()) ||
+      (gd.userInfo &&
+        (gd.userInfo.openId || gd.userInfo.openid || gd.userInfo.openID) &&
+        String(gd.userInfo.openId || gd.userInfo.openid || gd.userInfo.openID).trim()) ||
+      ''
+    )
+  } catch (e) {
+    return ''
+  }
+}
+
+function isOwnerMember(member, clubCreator) {
+  if (!member || typeof member !== 'object') return false
+  const role = member.role == null ? '' : String(member.role).toLowerCase()
+  return role === 'owner' || (clubCreator && String(member.userId || '') === String(clubCreator))
+}
+
+function mapClubToView(item, openid, index) {
+  const club = (item && item.club) || {}
+  const members = Array.isArray(item && item.members) ? item.members : []
+  const owner = members.find((m) => isOwnerMember(m, club.creator)) || members[0] || null
+  const isPresident = String(club.creator || '') === String(openid)
+  return {
+    id: club.id != null ? String(club.id) : `club_${index}`,
+    name: toDisplayName(club.name || '未命名俱乐部'),
+    address: toDisplayName(club.residence || '未设置常驻地'),
+    memberCount: members.length,
+    abbr: toAbbr((owner && owner.userName) || club.name),
+    avatarUrl: toAvatarUrl(owner && owner.userAvatar),
+    isPresident,
+  }
+}
+
 Page({
   data: {
-    joinedCount: 3,
+    joinedCount: 0,
     clubScrollTop: 0,
-    clubs: [
-      {
-        id: '1',
-        name: '羽林高手俱乐部',
-        address: '北京 · 朝阳区',
-        memberCount: 26,
-        abbr: '羽',
-        isPresident: true,
-      },
-      {
-        id: '2',
-        name: '周末约球小分队',
-        address: '上海 · 浦东新区',
-        memberCount: 18,
-        abbr: '周',
-        isPresident: false,
-      },
-      {
-        id: '3',
-        name: '朝阳公园晨练组',
-        address: '北京 · 朝阳区',
-        memberCount: 32,
-        abbr: '朝',
-        isPresident: false,
-      }
-    ],
+    clubs: [],
   },
 
   onPageScroll(e) {
@@ -46,5 +82,42 @@ Page({
     const id = e.currentTarget.dataset.id
     if (!id) return
     wx.navigateTo({ url: `/pages/club/details/index?id=${id}` })
+  },
+
+  fetchMyClubList(retryCount = 0) {
+    const openid = pickOpenId()
+    if (!openid) {
+      if (retryCount < 5) {
+        setTimeout(() => {
+          this.fetchMyClubList(retryCount + 1)
+        }, 300)
+      }
+      this.setData({
+        clubs: [],
+        joinedCount: 0,
+      })
+      return Promise.resolve([])
+    }
+    return CLUB_MY_LIST({ openId: openid })
+      .then((list) => {
+        const raw = Array.isArray(list) ? list : []
+        const clubs = raw.map((item, index) => mapClubToView(item, openid, index))
+        this.setData({
+          clubs,
+          joinedCount: clubs.length,
+        })
+        return clubs
+      })
+      .catch(() => {
+        this.setData({
+          clubs: [],
+          joinedCount: 0,
+        })
+        return []
+      })
+  },
+
+  onShow() {
+    this.fetchMyClubList()
   },
 })

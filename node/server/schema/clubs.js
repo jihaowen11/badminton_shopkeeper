@@ -12,6 +12,12 @@ module.exports = function (sequelize, DataTypes) {
             allowNull: false,
             field: 'name'
         },
+        //类型
+        type: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            field: 'type'
+        },
         //常住地
         residence: {
             type: DataTypes.STRING,

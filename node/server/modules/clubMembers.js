@@ -6,22 +6,26 @@ const clubMembers = require('../schema/clubMembers')(Sequelize, DataTypes);
 clubMembers.sync({ force: false });
 
 class ClubMemberModel {
-    static async create(data) {
+    static async create(data, options) {
         return await clubMembers.create({
             clubId: data.clubId,
             userId: data.userId,
+            userName: data.userName,
+            userAvatar: data.userAvatar,
             role: data.role,
             status: data.status,
             activity: data.activity,
             joinedAt: data.joinedAt,
             remark: data.remark
-        })
+        }, options)
     }
 
     static async update(id, data) {
         return await clubMembers.update({
             clubId: data.clubId,
             userId: data.userId,
+            userName: data.userName,
+            userAvatar: data.userAvatar,
             role: data.role,
             status: data.status,
             activity: data.activity,
@@ -68,6 +72,14 @@ class ClubMemberModel {
             where: {
                 id
             }
+        })
+    }
+
+    /** 删除某俱乐部下全部成员（可与 transaction 搭配） */
+    static async deleteByClubId(clubId, options = {}) {
+        return await clubMembers.destroy({
+            where: { clubId },
+            ...options
         })
     }
 }

@@ -10,7 +10,10 @@
   <view class="main-card">
     <view class="club-head-row">
       <view class="club-avatar-wrap">
-        <view class="club-avatar">{{club.abbr}}</view>
+        <view class="club-avatar">
+          <image wx:if="{{club.avatarUrl}}" class="club-avatar-img" src="{{club.avatarUrl}}" mode="aspectFill" />
+          <text wx:else>{{club.abbr}}</text>
+        </view>
         <view wx:if="{{club.isPresident}}" class="club-crown">
           <van-icon class="icon" name="gem" size="12" color="#ffffff" />
         </view>
@@ -67,18 +70,21 @@
       wx:key="id"
       class="member-card"
     >
-      <view class="member-avatar avatar-{{item.avatarTone}}">{{item.abbr}}</view>
+      <view class="member-avatar avatar-{{item.roleType === 'owner' ? 'green' : (item.roleType === 'admin' ? 'blue' : 'pink')}}">
+        <image wx:if="{{item.avatarUrl}}" class="member-avatar-img" src="{{item.avatarUrl}}" mode="aspectFill" />
+        <text wx:else>{{item.abbr}}</text>
+      </view>
       <view class="member-main">
         <view class="member-name-row">
           <text class="member-name">{{item.name}}</text>
-          <view wx:if="{{item.role === 'president'}}" class="role-pill role-president">会长</view>
-          <view wx:elif="{{item.role === 'admin'}}" class="role-pill role-admin">管理员</view>
+          <view wx:if="{{item.roleType === 'owner'}}" class="role-pill role-president">会长</view>
+          <view wx:elif="{{item.roleType === 'admin'}}" class="role-pill role-admin">管理员</view>
           <view wx:else class="role-pill role-member">成员</view>
         </view>
         <view class="member-sub">
-          <image class="sex" wx:if="{{item.gender === 'male'}}" src="/images/icon/nan.png" mode="widthFix"/>
-          <image class="sex" wx:else  src="/images/icon/nv.png" mode="widthFix"/>
-          <text class="member-dot">·</text>
+          <image class="sex" wx:if="{{item.gender === 'male'}}" src="/images/icon/nan.png" mode="widthFix" />
+          <image class="sex" wx:elif="{{item.gender === 'female'}}" src="/images/icon/nv.png" mode="widthFix" />
+          <text wx:if="{{item.gender !== 'unknown'}}" class="member-dot">·</text>
           <text class="member-level">{{item.level}}</text>
         </view>
       </view>
@@ -94,8 +100,7 @@
     <view class="feed-desc">俱乐部动态功能开发中，敬请期待。</view>
   </view>
 
-  <view class="page-footer">
-    <!-- <view class="footer-btn footer-btn-outline" bindtap="onTapAdd" hover-class="footer-btn-hover">新增</view> -->
-    <button class="footer-btn footer-btn-primary footer-share-btn" open-type="share" hover-class="footer-btn-hover-primary">邀请好友加入</button>
+  <view wx:if="{{canInvite}}" class="page-footer">
+    <button class="footer-btn footer-btn-primary footer-share-btn" open-type="share" hover-class="footer-btn-hover-primary">邀请入会</button>
   </view>
 </view>

@@ -192,6 +192,21 @@ page {
   flex-shrink: 0;
 }
 
+.gender-ph {
+  width: 28rpx;
+  height: 28rpx;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(18, 22, 26, 0.1);
+  font-size: 20rpx;
+  font-weight: 900;
+  color: rgba(18, 22, 26, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
 .location-field {
   display: flex;
   align-items: center;

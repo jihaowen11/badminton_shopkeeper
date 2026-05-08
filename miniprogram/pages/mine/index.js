@@ -1,4 +1,5 @@
 const DEFAULT_AVATAR = '/images/noheader.jpg'
+const { CLUB_MY_LIST } = require('../../request/api')
 
 function formatJoinDate(createdAt) {
   if (createdAt == null || createdAt === '') return ''
@@ -18,8 +19,20 @@ function mapUserToView(user) {
       userJoinText: '',
     }
   }
-  const avatar =
-    user.avatar && String(user.avatar).trim() ? String(user.avatar).trim() : DEFAULT_AVATAR
+  const rawAvatar = user.avatar && String(user.avatar).trim() ? String(user.avatar).trim() : ''
+  let avatar = DEFAULT_AVATAR
+  if (rawAvatar) {
+    try {
+      const app = getApp()
+      if (app.fun && typeof app.fun.joinStaticUrl === 'function') {
+        avatar = app.fun.joinStaticUrl(rawAvatar)
+      } else {
+        avatar = rawAvatar
+      }
+    } catch (e) {
+      avatar = rawAvatar
+    }
+  }
   const nick =
     user.nickName && String(user.nickName).trim() ? String(user.nickName).trim() : '未命名'
   const g = Number(user.gender)
@@ -38,6 +51,77 @@ function mapUserToView(user) {
   }
 }
 
+function toDisplayName(name) {
+  const text = name == null ? '' : String(name).trim()
+  return text || '未知'
+}
+
+function toAvatarAbbr(name) {
+  const text = toDisplayName(name)
+  return text.slice(0, 1).toUpperCase()
+}
+
+function toAvatarUrl(rawAvatar) {
+  const path = rawAvatar == null ? '' : String(rawAvatar).trim()
+  if (!path) return ''
+  try {
+    const app = getApp()
+    if (app && app.fun && typeof app.fun.joinStaticUrl === 'function') {
+      return app.fun.joinStaticUrl(path)
+    }
+  } catch (e) {}
+  return path
+}
+
+function toRoleText(role, isCreator) {
+  if (isCreator) return '会长'
+  const r = role == null ? '' : String(role).toLowerCase()
+  if (r === 'owner') return '会长'
+  else if (r === 'admin' ) return '管理员'
+  return '成员'
+}
+
+function pickOpenId() {
+  try {
+    const app = getApp()
+    const gd = (app && app.globalData) || {}
+    return (
+      (gd.openid && String(gd.openid).trim()) ||
+      (gd.userInfo &&
+        (gd.userInfo.openId || gd.userInfo.openid || gd.userInfo.openID) &&
+        String(gd.userInfo.openId || gd.userInfo.openid || gd.userInfo.openID).trim()) ||
+      ''
+    )
+  } catch (e) {
+    return ''
+  }
+}
+
+function mapClubToView(item, openid, index) {
+  const club = (item && item.club) || {}
+  const members = Array.isArray(item && item.members) ? item.members : []
+  const myMember = members.find((m) => m && m.userId === openid)
+  const roleText = toRoleText(myMember && myMember.role, String(club.creator || '') === openid)
+  const avatarBadges = members.slice(0, 4).map((m, idx) => {
+    const className = idx > 0 ? `is-${idx + 1}` : ''
+    return {
+      abbr: toAvatarAbbr(m && m.userName),
+      avatarUrl: toAvatarUrl(m && m.userAvatar),
+      className,
+    }
+  })
+  const moreCount = members.length > 4 ? members.length - 4 : 0
+  return {
+    id: club.id != null ? String(club.id) : `club_${index}`,
+    name: toDisplayName(club.name || '未命名俱乐部'),
+    roleText,
+    isMemberRole: roleText === '成员',
+    avatarBadges,
+    moreCountText: moreCount > 0 ? `+${moreCount}` : '',
+    memberCountText: `${members.length}人`,
+  }
+}
+
 Page({
   data: {
     enter: false,
@@ -46,6 +130,8 @@ Page({
     userGender: 0,
     userLevel: '未定级',
     userJoinText: '',
+    myClubs: [],
+    myClubLoading: false,
     matches: [
       {
         id: 'm1',
@@ -118,8 +204,40 @@ Page({
     this.setData(mapUserToView(user))
   },
 
+  fetchMyClubs(retryCount = 0) {
+    const openid = pickOpenId()
+    if (!openid) {
+      if (retryCount < 5) {
+        setTimeout(() => {
+          this.fetchMyClubs(retryCount + 1)
+        }, 300)
+      }
+      this.setData({
+        myClubLoading: false,
+        myClubs: [],
+      })
+      return Promise.resolve([])
+    }
+    this.setData({ myClubLoading: true })
+    return CLUB_MY_LIST({ openId: openid })
+      .then((list) => {
+        const raw = Array.isArray(list) ? list : []
+        const myClubs = raw.map((item, index) => mapClubToView(item, openid, index)).slice(0, 2)
+        this.setData({ myClubs })
+        return myClubs
+      })
+      .catch(() => {
+        this.setData({ myClubs: [] })
+        return []
+      })
+      .finally(() => {
+        this.setData({ myClubLoading: false })
+      })
+  },
+
   onShow() {
     this.syncUserFromGlobal()
+    this.fetchMyClubs()
     if (typeof this.getTabBar === 'function') {
       this.getTabBar((tabBar) => {
         tabBar.setData({
@@ -143,5 +261,10 @@ Page({
 
   onMyInfo() {
     wx.navigateTo({ url: '/pages/user/info/index' })
+  },
+
+  onGoClubDetail(e) {
+    const id = e.currentTarget.dataset.id
+    wx.navigateTo({ url: `/pages/club/details/index?id=${id}` })
   },
 })

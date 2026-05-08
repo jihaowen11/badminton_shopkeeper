@@ -9,7 +9,7 @@ App({
         openid:'',
         userInfo:{},
         serverUrl: "http://192.168.80.107:3000",
-        staticUrl: "http://192.168.80.107:3000/images",
+        staticUrl: "http://192.168.80.107:3000",
         code:'v0.9',
         dicts: {
           isAd: true,
@@ -17,6 +17,30 @@ App({
     }
 
     this.fun = {
+        /** 头像等静态资源：相对路径拼 globalData.staticUrl；已是 http(s)/wxfile/本地 /images 则原样返回 */
+        joinStaticUrl(path) {
+          if (path == null || path === '') return ''
+          const p = String(path).trim()
+          if (!p) return ''
+          if (/^(https?:|wxfile:)\/\//i.test(p)) return p
+          if (p.startsWith('/') && p.indexOf('/images/') === 0) return p
+          const app = getApp()
+          const base = (app.globalData.staticUrl || '').replace(/\/$/, '')
+          if (!base) return p
+          return base + (p.startsWith('/') ? p : '/' + p)
+        },
+        /** 提交接口用：去掉 staticUrl 前缀，得到相对路径 */
+        stripStaticUrl(fullOrRelative) {
+          const p = String(fullOrRelative || '').trim()
+          if (!p) return ''
+          const app = getApp()
+          const base = (app.globalData.staticUrl || '').replace(/\/$/, '')
+          if (base && p.indexOf(base) === 0) {
+            const rest = p.slice(base.length)
+            return rest.startsWith('/') ? rest : '/' + rest
+          }
+          return p
+        },
         formatTime(formatStr) {
             var str = formatStr;
             var curData = new Date()

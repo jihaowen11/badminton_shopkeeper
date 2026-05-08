@@ -56,7 +56,7 @@
         <text class="label label-inline">常驻地</text>
       </view>
       <view class="location-field" bindtap="onTapLocation" hover-class="location-field-hover">
-        <text class="{{locationText ? 'location-text' : 'location-placeholder'}}">{{locationText || '选择或输入活动地点'}}</text>
+        <text class="{{locationText ? 'location-text' : 'location-placeholder'}}">{{locationText || '选择或输入常驻地'}}</text>
         <van-icon class="icon" name="arrow" size="14" color="rgba(18,22,26,0.35)" />
       </view>
     </view>
@@ -75,7 +75,7 @@
       <input
         class="loc-panel-input"
         value="{{tempLocation}}"
-        placeholder="例如：朝阳体育馆 3 号场"
+        placeholder="例如：朝阳区 · 某球馆"
         bindinput="onTempLocationInput"
         focus="{{locationInputVisible}}"
       />

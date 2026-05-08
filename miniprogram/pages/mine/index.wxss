@@ -306,6 +306,16 @@ page{
   gap: 22rpx;
 }
 
+.club-empty{
+  padding: 36rpx 24rpx;
+  border-radius: 24rpx;
+  background: rgba(255,255,255,0.85);
+  color: rgba(18,22,26,0.5);
+  text-align: center;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
 .club-card{
   background: rgba(255,255,255,0.92);
   border-radius: 26rpx;

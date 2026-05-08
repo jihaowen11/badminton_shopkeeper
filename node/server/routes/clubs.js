@@ -15,7 +15,11 @@ router.post('/detail', ClubController.detail)
 //查询俱乐部列表
 router.post('/list', ClubController.list)
 
+//我的俱乐部列表（含成员）：body.openId / openid
+router.post('/myList', ClubController.myList)
+
 //删除俱乐部
 router.post('/delete', ClubController.delete)
+
 
 module.exports = router

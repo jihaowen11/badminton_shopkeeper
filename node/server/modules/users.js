@@ -1,7 +1,20 @@
-const { DataTypes } = require('sequelize');
+const { DataTypes, Op } = require('sequelize');
 const db = require('../config/db');
 const Sequelize = db.sequelize;
 const users = require('../schema/users')(Sequelize, DataTypes);
+
+/** 与俱乐部成员等场景对接的用户展示字段（对应 users 表） */
+const PROFILE_ATTRS = [
+    'openId',
+    'nickName',
+    'avatar',
+    'gender',
+    'badmintonLevel',
+    'name',
+    'phone',
+    'accountLevel',
+    'points'
+];
 
 
 users.sync({force: false});
@@ -33,6 +46,26 @@ class UserModel {
                 openId
             }
         })
+    }
+
+    /**
+     * 按 openId 批量查询用户资料，返回 Map<openId, plainObject>
+     * @param {string[]} openIds
+     * @returns {Promise<Map<string, object>>}
+     */
+    static async mapProfileByOpenIds(openIds) {
+        const ids = [...new Set((openIds || []).map((id) => String(id).trim()).filter(Boolean))];
+        if (ids.length === 0) return new Map();
+        const rows = await users.findAll({
+            where: { openId: { [Op.in]: ids } },
+            attributes: PROFILE_ATTRS
+        });
+        const map = new Map();
+        for (const row of rows) {
+            const plain = row.get({ plain: true });
+            if (plain.openId != null) map.set(String(plain.openId), plain);
+        }
+        return map;
     }
 
     static async update(openId, data) {

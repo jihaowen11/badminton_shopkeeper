@@ -1,5 +1,7 @@
 // pages/club/create/index.js
 
+const { CREATE_CLUB } = require('../../../request/api')
+
 Page({
   data: {
     membersScrollTop: 0,
@@ -92,18 +94,9 @@ Page({
   onCreateClub() {
     const name = (this.data.clubName || '').trim()
     const intro = (this.data.intro || '').trim()
-    const location = (this.data.locationText || '').trim()
+    const residence = (this.data.locationText || '').trim()
     const typeIndex = this.data.selectedTypeIndex
     const typeItem = typeIndex >= 0 ? this.data.clubTypes[typeIndex] : null
-
-    const payload = {
-      clubName: name,
-      clubType: typeItem
-        ? { id: typeItem.id, title: typeItem.title, desc: typeItem.desc }
-        : null,
-      intro,
-      location,
-    }
 
     if (!name) {
       wx.showToast({ title: '请填写俱乐部名称', icon: 'none' })
@@ -113,16 +106,38 @@ Page({
       wx.showToast({ title: '请选择俱乐部类型', icon: 'none' })
       return
     }
-    if (!location) {
-      wx.showToast({ title: '请选择活动地点', icon: 'none' })
+    if (!residence) {
+      wx.showToast({ title: '请填写常驻地', icon: 'none' })
       return
     }
 
-    console.log('[createClub]', payload)
+    const app = getApp()
+    const creator = (app.globalData && app.globalData.openid) || ''
+    if (!creator) {
+      wx.showToast({ title: '请先登录', icon: 'none' })
+      return
+    }
 
-    wx.showToast({ title: '创建成功', icon: 'success' })
-    setTimeout(() => {
-      wx.navigateBack({ delta: 1 })
-    }, 1200)
+    const payload = {
+      name,
+      type: typeItem.title,
+      residence,
+      intro: intro === '' ? null : intro,
+      joinMethod: '邀请制',
+      creator,
+    }
+
+    wx.showLoading({ title: '创建中…', mask: true })
+    CREATE_CLUB(payload)
+      .then(() => {
+        wx.showToast({ title: '创建成功', icon: 'success' })
+        setTimeout(() => {
+          wx.navigateBack({ delta: 1 })
+        }, 600)
+      })
+      .catch(() => {})
+      .finally(() => {
+        wx.hideLoading()
+      })
   },
 })

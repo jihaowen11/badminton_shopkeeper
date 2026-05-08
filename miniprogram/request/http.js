@@ -52,6 +52,16 @@ function CreateHeader(url, type) {
   return header;
 }
 
+/** wx.uploadFile 由客户端自动带 multipart boundary，不要写死 application/json */
+function CreateUploadHeader(url) {
+  const header = {}
+  if (exceptionAddrArr.indexOf(url) === -1) {
+    const token = wx.getStorageSync('token')
+    if (token) header.Authorization = token
+  }
+  return header
+}
+
 //post请求，数据在body中
 function postRequest(url, data) {
   wx.showNavigationBarLoading()
@@ -122,40 +132,47 @@ function getRequest(url, data) {
   })
 }
 
-//文件上传
+//文件上传（表单字段名 file，与多数 Spring / Node 接收一致）
 function uploadFile(url, filePath, data) {
-  let header = CreateHeader(url, 'POST');
+  const header = CreateUploadHeader(url)
+  const formData = data && typeof data === 'object' ? data : {}
   return new Promise((resolve, reject) => {
     wx.uploadFile({
       filePath: filePath,
       header: header,
       name: 'file',
-      formData: data || '',
+      formData,
       url: getServerBase() + url,
-      success: (res => {
-        if (res.statusCode === 200) {
-          //200: 服务端业务处理正常结束
-          let { code, object, message } = JSON.parse(res.data)
-          console.log(code, object, message)
-          if (code == 1) {
-            resolve(object)
-          } else {
-            showToast(message)
-          }
-        } else {
+      success: (res) => {
+        if (res.statusCode !== 200) {
           showToast('网络失败')
           reject(res)
+          return
         }
-        wx.hideNavigationBarLoading()
-      }),
-      fail: (res => {
+        let body
+        try {
+          body = typeof res.data === 'string' ? JSON.parse(res.data) : res.data
+        } catch (err) {
+          showToast('上传响应异常')
+          reject(err)
+          return
+        }
+        const { code, object, message } = body || {}
+        if (code == 200 || code == 1) {
+          resolve(object)
+        } else {
+          showToast(message || '上传失败')
+          reject(body)
+        }
+      },
+      fail: (res) => {
         showToast('网络失败')
-        wx.hideNavigationBarLoading()
         reject(res)
-      })
+      },
     })
   })
 }
 
 module.exports.getRequest = getRequest;
 module.exports.postRequest = postRequest;
+module.exports.uploadFile = uploadFile;

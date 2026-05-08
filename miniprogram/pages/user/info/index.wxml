@@ -18,7 +18,7 @@
           </view>
           <view class="avatar-meta">
             <view class="avatar-title">头像</view>
-            <view class="avatar-sub">点击获取微信头像</view>
+            <view class="avatar-sub">选择头像</view>
           </view>
           <van-icon class="avatar-arrow" name="arrow" size="14" color="rgba(18,22,26,0.35)" />
         </button>
@@ -52,7 +52,8 @@
           bindtap="onSelectGender"
           hover-class="seg-hover"
         >
-          <image class="gender-ico" mode="widthFix" src="{{item.icon}}" />
+          <image wx:if="{{item.icon}}" class="gender-ico" mode="widthFix" src="{{item.icon}}" />
+          <view wx:else class="gender-ph">?</view>
           <text>{{item.title}}</text>
         </view>
       </view>
