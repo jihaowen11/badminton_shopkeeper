@@ -146,10 +146,12 @@
         <van-icon class="icon" name="friends" size="16" color="#12161a" />
         <text class="label label-inline">俱乐部（可选）</text>
       </view>
-      <view class="location-field" bindtap="onPickClub" hover-class="location-field-hover">
-        <text class="{{clubText ? 'location-text' : 'location-placeholder'}}">{{clubText || '不关联俱乐部'}}</text>
-        <van-icon class="icon" name="arrow" size="14" color="rgba(18,22,26,0.35)" />
-      </view>
+      <picker mode="selector" range="{{clubPickerNames}}" value="{{clubPickerIndex}}" bindchange="onPickClubChange">
+        <view class="location-field" hover-class="location-field-hover">
+          <text class="{{clubText ? 'location-text' : 'location-placeholder'}}">{{clubText || '不关联俱乐部'}}</text>
+          <van-icon class="icon" name="arrow" size="14" color="rgba(18,22,26,0.35)" />
+        </view>
+      </picker>
     </view>
 
     <view class="bottom-spacer"></view>

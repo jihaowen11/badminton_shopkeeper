@@ -88,7 +88,7 @@
           <text class="member-level">{{item.level}}</text>
         </view>
       </view>
-      <view class="member-more" data-id="{{item.id}}" bindtap="onMemberMore" hover-class="member-more-hover">
+      <view wx:if="{{!isShareMode}}" class="member-more" data-id="{{item.id}}" bindtap="onMemberMore" hover-class="member-more-hover">
         <van-icon class="icon" name="ellipsis" size="18" color="rgba(18,22,26,0.45)" />
       </view>
     </view>
@@ -100,7 +100,17 @@
     <view class="feed-desc">俱乐部动态功能开发中，敬请期待。</view>
   </view>
 
-  <view wx:if="{{canInvite}}" class="page-footer">
-    <button class="footer-btn footer-btn-primary footer-share-btn" open-type="share" hover-class="footer-btn-hover-primary">邀请入会</button>
+  <view wx:if="{{isShareMode}}" class="page-footer">
+    <button
+      class="footer-btn footer-btn-primary footer-share-btn"
+      bindtap="onJoinClub"
+      hover-class="footer-btn-hover-primary"
+      disabled="{{hasJoined || joining}}"
+    >
+      {{hasJoined ? '已加入俱乐部' : (joining ? '加入中...' : '加入俱乐部')}}
+    </button>
+  </view>
+  <view wx:elif="{{canInvite}}" class="page-footer">
+    <button class="footer-btn footer-btn-primary footer-share-btn" open-type="share" hover-class="footer-btn-hover-primary">邀请好友加入俱乐部</button>
   </view>
 </view>

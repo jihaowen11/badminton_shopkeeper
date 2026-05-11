@@ -1,4 +1,6 @@
 {
+  "enableShareAppMessage": true,
+  "enableShareTimeline": true,
   "usingComponents": {
     "van-icon": "../../dist/icon/index"
   }

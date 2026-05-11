@@ -18,4 +18,10 @@ router.post('/list', ClubMemberController.list)
 //删除成员
 router.post('/delete', ClubMemberController.delete)
 
+//设置管理员（club_id + user_id 或 clubId + userId）
+router.post('/setAdmin', ClubMemberController.setAdmin)
+
+//移除管理员（admin → member）
+router.post('/removeAdmin', ClubMemberController.removeAdmin)
+
 module.exports = router

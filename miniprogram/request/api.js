@@ -22,6 +22,16 @@ const DEL_CLUB = (data) => postRequest(`/clubs/delete`, data)
 //查询我的俱乐部列表
 const CLUB_MY_LIST = (data) => postRequest(`/clubs/myList`, data)
 
+//俱乐部成员
+//邀请加入俱乐部
+const INVITE_CLUB = (data) => postRequest(`/clubMembers/create`, data)
+//退出/移除俱乐部
+const EXIT_CLUB = (data) => postRequest(`/clubMembers/delete`, data)
+//设置管理员
+const SET_ADMIN = (data) => postRequest(`/clubMembers/setAdmin`, data)
+//移除管理员
+const REMOVE_ADMIN = (data) => postRequest(`/clubMembers/removeAdmin`, data)
+
 module.exports = {
   GET_OPENID,
   UPDATA_USER,
@@ -31,5 +41,9 @@ module.exports = {
   CLUB_LIST,
   CLUB_DES,
   DEL_CLUB,
-  CLUB_MY_LIST
+  CLUB_MY_LIST,
+  INVITE_CLUB,
+  EXIT_CLUB,
+  SET_ADMIN,
+  REMOVE_ADMIN
 }

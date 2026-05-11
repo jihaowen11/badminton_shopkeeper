@@ -1,5 +1,5 @@
 // pages/club/details/index.js
-const { CLUB_DES, DEL_CLUB } = require('../../../request/api')
+const { CLUB_DES, DEL_CLUB, INVITE_CLUB, EXIT_CLUB, SET_ADMIN, REMOVE_ADMIN } = require('../../../request/api')
 
 function pickOpenId() {
   try {
@@ -55,7 +55,7 @@ function toRoleView(role) {
 
 function mapMembersToView(rawMembers) {
   const rows = Array.isArray(rawMembers) ? rawMembers : []
-  return rows.map((m, index) => {
+  const mapped = rows.map((m, index) => {
     const user = m && typeof m.user === 'object' ? m.user : {}
     const role = toRoleView(m && m.role)
     const name = toText(user.nickName || (m && m.userName), `成员${index + 1}`)
@@ -73,6 +73,14 @@ function mapMembersToView(rawMembers) {
       level: toText(user.badmintonLevel, '未定级'),
     }
   })
+  const roleWeight = { owner: 0, admin: 1, member: 2 }
+  mapped.sort((a, b) => {
+    const wa = roleWeight[a.roleType] != null ? roleWeight[a.roleType] : 99
+    const wb = roleWeight[b.roleType] != null ? roleWeight[b.roleType] : 99
+    if (wa !== wb) return wa - wb
+    return 0
+  })
+  return mapped
 }
 
 function resolveCurrentUserRole(openid, members, clubCreator) {
@@ -84,6 +92,22 @@ function resolveCurrentUserRole(openid, members, clubCreator) {
   }
   if (toText(clubCreator) === oid) return 'owner'
   return 'member'
+}
+
+function hasJoinedClub(openid, members) {
+  const oid = toText(openid)
+  if (!oid) return false
+  return (members || []).some((m) => toText(m && m.userId) === oid)
+}
+
+function isProfileCompleted(userInfo) {
+  const u = userInfo && typeof userInfo === 'object' ? userInfo : {}
+  const nick = toText(u.nickName)
+  const avatar = toText(u.avatar)
+  if (!nick || nick.indexOf('羽球人') === 0) return false
+  if (!avatar) return false
+  if (avatar.indexOf('/images/') === 0) return false
+  return true
 }
 
 function mapClubToView(rawClub, members, openid) {
@@ -117,6 +141,9 @@ Page({
     feedCount: 0,
     currentUserRole: 'member',
     canInvite: false,
+    isShareMode: false,
+    hasJoined: false,
+    joining: false,
     club: {
       name: '',
       abbr: '',
@@ -144,8 +171,12 @@ Page({
     } catch (e) {}
     this.setData({ statusBarHeight: h })
     const clubId = options && (options.id || options.clubId)
+    const mode = options && options.mode
     if (clubId) {
       this.setData({ clubId: String(clubId) })
+    }
+    if (String(mode || '').toLowerCase() === 'share') {
+      this.setData({ isShareMode: true })
     }
     this.fetchClubDetail()
   },
@@ -170,6 +201,9 @@ Page({
     const role = this.data.currentUserRole
     const target = (this.data.members || []).find((m) => String(m.id) === String(id))
     const targetRole = target && target.roleType ? target.roleType : 'member'
+    const targetUserId = toText(target && target.userId)
+    const currentUserId = pickOpenId()
+    const isSelf = targetUserId !== '' && targetUserId === currentUserId
     const itemList = ['查看资料']
     if (role === 'owner') {
       if (targetRole === 'owner') {
@@ -180,18 +214,136 @@ Page({
         itemList.push('设置管理员', '移出俱乐部')
       }
     } else if (role === 'admin') {
-      itemList.push('移出俱乐部')
+      if (isSelf) {
+        itemList.push('退出俱乐部')
+      } else if(targetRole !== 'owner') {
+        itemList.push('移出俱乐部')
+      }
+    } else if (role === 'member' && isSelf) {
+      itemList.push('退出俱乐部')
     }
     wx.showActionSheet({
       itemList,
       success: (res) => {
         const action = itemList[res.tapIndex]
         if (!action) return
+        if (action === '查看资料') {
+          if (!targetUserId) {
+            wx.showToast({ title: '成员信息异常', icon: 'none' })
+            return
+          }
+          wx.navigateTo({ url: `/pages/user/person/index?openId=${encodeURIComponent(targetUserId)}` })
+          return
+        }
         if (action === '解散俱乐部') {
           this.confirmDisbandClub()
           return
         }
+        if (action === '设置管理员') {
+          if (!targetUserId) {
+            wx.showToast({ title: '成员信息异常', icon: 'none' })
+            return
+          }
+          this.confirmMemberAction({
+            title: '设置管理员',
+            content: `确认将 ${toText(target && target.name, '该成员')} 设为管理员吗？`,
+            loadingText: '设置中...',
+            successText: '已设置管理员',
+            request: () => SET_ADMIN({ clubId: Number(this.data.clubId), userId: targetUserId }),
+          })
+          return
+        }
+        if (action === '取消管理员') {
+          if (!targetUserId) {
+            wx.showToast({ title: '成员信息异常', icon: 'none' })
+            return
+          }
+          this.confirmMemberAction({
+            title: '取消管理员',
+            content: `确认取消 ${toText(target && target.name, '该成员')} 的管理员身份吗？`,
+            loadingText: '处理中...',
+            successText: '已取消管理员',
+            request: () => REMOVE_ADMIN({ clubId: Number(this.data.clubId), userId: targetUserId }),
+          })
+          return
+        }
+        if (action === '移出俱乐部') {
+          if (!targetUserId) {
+            wx.showToast({ title: '成员信息异常', icon: 'none' })
+            return
+          }
+          this.confirmMemberAction({
+            title: '移出俱乐部',
+            content: `确认将 ${toText(target && target.name, '该成员')} 移出俱乐部吗？`,
+            loadingText: '移出中...',
+            successText: '已移出俱乐部',
+            request: () => EXIT_CLUB({ clubId: Number(this.data.clubId), userId: targetUserId }),
+          })
+          return
+        }
+        if (action === '退出俱乐部') {
+          this.confirmExitClub(targetUserId || currentUserId)
+          return
+        }
         wx.showToast({ title: `${action}(${id})`, icon: 'none' })
+      },
+    })
+  },
+
+  confirmExitClub(userId) {
+    const clubId = Number(this.data.clubId)
+    const uid = toText(userId || pickOpenId())
+    if (!clubId || !uid) {
+      wx.showToast({ title: '参数异常，无法退出', icon: 'none' })
+      return
+    }
+    wx.showModal({
+      title: '提示',
+      content: '退出后将不再属于该俱乐部，确定继续吗？',
+      confirmText: '确认退出',
+      confirmColor: '#ff4d4f',
+      success: (res) => {
+        if (!res.confirm) return
+        wx.showLoading({ title: '退出中...', mask: true })
+        EXIT_CLUB({
+          clubId,
+          userId: uid,
+        })
+          .then(() => {
+            wx.showToast({ title: '已退出俱乐部', icon: 'success' })
+            this.fetchClubDetail()
+          })
+          .catch(() => {})
+          .finally(() => {
+            wx.hideLoading()
+          })
+      },
+    })
+  },
+
+  confirmMemberAction(opts) {
+    const title = toText(opts && opts.title, '操作确认')
+    const content = toText(opts && opts.content, '确认执行该操作吗？')
+    const loadingText = toText(opts && opts.loadingText, '处理中...')
+    const successText = toText(opts && opts.successText, '操作成功')
+    const request = opts && typeof opts.request === 'function' ? opts.request : null
+    if (!request) return
+    wx.showModal({
+      title,
+      content,
+      confirmColor: '#ff4d4f',
+      success: (res) => {
+        if (!res.confirm) return
+        wx.showLoading({ title: loadingText, mask: true })
+        request()
+          .then(() => {
+            wx.showToast({ title: successText, icon: 'success' })
+            this.fetchClubDetail()
+          })
+          .catch(() => {})
+          .finally(() => {
+            wx.hideLoading()
+          })
       },
     })
   },
@@ -229,6 +381,64 @@ Page({
     wx.showToast({ title: '新增功能接入中', icon: 'none' })
   },
 
+  onJoinClub() {
+    if (!this.data.isShareMode) return
+    if (this.data.joining) return
+    const clubId = Number(this.data.clubId)
+    if (!clubId) {
+      wx.showToast({ title: '俱乐部信息异常', icon: 'none' })
+      return
+    }
+    if (this.data.hasJoined) {
+      wx.showToast({ title: '你已加入该俱乐部', icon: 'none' })
+      return
+    }
+
+    const app = getApp()
+    const openid = pickOpenId()
+    const userInfo = (app && app.globalData && app.globalData.userInfo) || {}
+    if (!openid) {
+      wx.showToast({ title: '请先登录后再加入', icon: 'none' })
+      return
+    }
+    if (!isProfileCompleted(userInfo)) {
+      const returnUrl = encodeURIComponent(`/pages/club/details/index?id=${clubId}&mode=share`)
+      wx.showModal({
+        title: '提示',
+        content: '请先完善昵称和头像信息，再加入俱乐部。',
+        confirmText: '去完善',
+        success: (res) => {
+          if (!res.confirm) return
+          wx.navigateTo({
+            url: `/pages/user/info/index?from=clubShareJoin&clubId=${clubId}&returnUrl=${returnUrl}`,
+          })
+        },
+      })
+      return
+    }
+    const payload = {
+      clubId,
+      userId: openid,
+      userName: toText(userInfo.nickName || userInfo.name, '未命名用户'),
+      userAvatar: toText(userInfo.avatar),
+      role: 'member',
+      joinedAt: new Date().toISOString(),
+    }
+
+    this.setData({ joining: true })
+    wx.showLoading({ title: '加入中...', mask: true })
+    INVITE_CLUB(payload)
+      .then(() => {
+        wx.showToast({ title: '加入成功', icon: 'success' })
+        this.fetchClubDetail()
+      })
+      .catch(() => {})
+      .finally(() => {
+        wx.hideLoading()
+        this.setData({ joining: false })
+      })
+  },
+
   onShareAppMessage() {
     const id = this.data.clubId || '1'
     const randomIndex = Math.floor(Math.random() * 6) + 1
@@ -249,12 +459,14 @@ Page({
         const openid = pickOpenId()
         const currentUserRole = resolveCurrentUserRole(openid, members, payload.club && payload.club.creator)
         const canInvite = currentUserRole === 'owner' || currentUserRole === 'admin'
+        const hasJoined = hasJoinedClub(openid, members)
         this.setData({
           club: mapClubToView(payload.club, members, openid),
           members,
           memberCount: members.length,
           currentUserRole,
           canInvite,
+          hasJoined,
         })
         return ret
       })

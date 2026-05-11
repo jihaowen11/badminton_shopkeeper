@@ -19,6 +19,18 @@ async function membersPlainWithUserProfiles(memberInstances) {
     });
 }
 
+/** 会长(owner) → 管理员(admin) → 成员(member)，同角色按 id 升序 */
+const MEMBER_ROLE_ORDER = { owner: 0, admin: 1, member: 2 };
+
+function sortMembersByRole(members) {
+    return [...members].sort((a, b) => {
+        const ra = MEMBER_ROLE_ORDER[String(a.role || '').toLowerCase()] ?? 99;
+        const rb = MEMBER_ROLE_ORDER[String(b.role || '').toLowerCase()] ?? 99;
+        if (ra !== rb) return ra - rb;
+        return (Number(a.id) || 0) - (Number(b.id) || 0);
+    });
+}
+
 class ClubModel {
     static async create(data) {
         if (!data || !data.creator) {
@@ -94,7 +106,7 @@ class ClubModel {
         const club = await clubs.findOne({ where: { id } });
         if (!club) return null;
         const members = await ClubMemberModel.list({ clubId: id });
-        const membersOut = await membersPlainWithUserProfiles(members);
+        const membersOut = sortMembersByRole(await membersPlainWithUserProfiles(members));
         return {
             club: club.get({ plain: true }),
             members: membersOut
@@ -137,7 +149,7 @@ class ClubModel {
             const club = clubById.get(clubId);
             if (!club) continue;
             const members = await ClubMemberModel.list({ clubId });
-            const membersOut = await membersPlainWithUserProfiles(members);
+            const membersOut = sortMembersByRole(await membersPlainWithUserProfiles(members));
             out.push({
                 club: club.get({ plain: true }),
                 members: membersOut

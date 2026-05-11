@@ -67,10 +67,10 @@
   </view>
 
   <view class="mine-content">
-    <view class="share-btn enter-item delay-1">
+    <button class="share-btn enter-item delay-1" open-type="share" hover-class="share-btn-hover">
       <van-icon class="icon" name="smile-o" size="38rpx" color="#ffffff" />
       <view class="share-text">分享羽球掌柜给好友</view>
-    </view>
+    </button>
 
     <view class="block enter-item delay-2" wx:if="{{ myClubs.length}}">
       <view class="block-head">

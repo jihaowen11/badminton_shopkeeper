@@ -1,4 +1,5 @@
 // pages/match/create/index.js
+const { CLUB_MY_LIST } = require('../../../request/api')
 
 function pad2(n) {
   return String(n).padStart(2, '0')
@@ -27,6 +28,35 @@ function buildRoundOptions(people) {
     list.push({ value: i, label: `${i}场` })
   }
   return list
+}
+
+function pickOpenId() {
+  try {
+    const app = getApp()
+    const gd = (app && app.globalData) || {}
+    return (
+      (gd.openid && String(gd.openid).trim()) ||
+      (gd.userInfo &&
+        (gd.userInfo.openId || gd.userInfo.openid || gd.userInfo.openID) &&
+        String(gd.userInfo.openId || gd.userInfo.openid || gd.userInfo.openID).trim()) ||
+      ''
+    )
+  } catch (e) {
+    return ''
+  }
+}
+
+function mapMyClubOptions(rawList) {
+  const list = Array.isArray(rawList) ? rawList : []
+  return list
+    .map((item) => {
+      const club = item && item.club ? item.club : {}
+      const id = club && club.id != null ? String(club.id) : ''
+      const name = club && club.name != null ? String(club.name).trim() : ''
+      if (!id || !name) return null
+      return { id, name }
+    })
+    .filter(Boolean)
 }
 
 Page({
@@ -62,16 +92,18 @@ Page({
     tempVenue: '',
 
     clubOptions: [
-      { id: 'c1', name: '羽林高手俱乐部' },
-      { id: 'c2', name: '周末约球小分队' },
-      { id: 'c3', name: '朝阳公园晨练组' },
     ],
+    clubPickerNames: [
+      '不关联俱乐部',
+    ],
+    clubPickerIndex: 0,
     clubId: '',
     clubText: '',
   },
 
   onLoad() {
     this.syncDefaultName()
+    this.fetchMyClubs()
   },
 
   onPageScroll(e) {
@@ -192,20 +224,53 @@ Page({
     this.setData({ venueText: t, venueInputVisible: false })
   },
 
-  onPickClub() {
-    const items = this.data.clubOptions || []
-    wx.showActionSheet({
-      itemList: ['不关联俱乐部'].concat(items.map((c) => c.name)),
-      success: (res) => {
-        if (res.tapIndex === 0) {
-          this.setData({ clubId: '', clubText: '' })
-          return
-        }
-        const idx = res.tapIndex - 1
-        const c = items[idx]
-        if (!c) return
-        this.setData({ clubId: c.id, clubText: c.name })
-      },
+  fetchMyClubs(retryCount = 0) {
+    const openId = pickOpenId()
+    if (!openId) {
+      if (retryCount < 5) {
+        setTimeout(() => this.fetchMyClubs(retryCount + 1), 300)
+      }
+      return Promise.resolve([])
+    }
+    return CLUB_MY_LIST({ openId })
+      .then((list) => {
+        const clubOptions = mapMyClubOptions(list)
+        const clubPickerNames = ['不关联俱乐部'].concat(clubOptions.map((c) => c.name))
+        this.setData({
+          clubOptions,
+          clubPickerNames,
+          clubPickerIndex: 0,
+          clubId: '',
+          clubText: '',
+        })
+        return clubOptions
+      })
+      .catch(() => {
+        this.setData({
+          clubOptions: [],
+          clubPickerNames: ['不关联俱乐部'],
+          clubPickerIndex: 0,
+          clubId: '',
+          clubText: '',
+        })
+        return []
+      })
+  },
+
+  onPickClubChange(e) {
+    const index = Number(e && e.detail && e.detail.value)
+    if (!Number.isFinite(index) || index < 0) return
+    if (index === 0) {
+      this.setData({ clubPickerIndex: 0, clubId: '', clubText: '' })
+      return
+    }
+    const clubOptions = this.data.clubOptions || []
+    const selected = clubOptions[index - 1]
+    if (!selected) return
+    this.setData({
+      clubPickerIndex: index,
+      clubId: selected.id,
+      clubText: selected.name,
     })
   },
 
@@ -222,6 +287,7 @@ Page({
       peopleCount: this.data.peopleCount,
       rounds: this.data.selectedRound,
       system: system ? system.title : this.data.systemId,
+      clubId: this.data.clubId || null,
       club: this.data.clubId ? { id: this.data.clubId, name: this.data.clubText } : null,
       matchTime:
         this.data.mode === 'pre'

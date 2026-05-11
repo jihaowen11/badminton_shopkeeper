@@ -241,6 +241,7 @@ page{
 }
 
 .share-btn{
+  width: 100% !important;
   height: 80rpx;
   border-radius: 999rpx;
   background: linear-gradient(90deg, #0a8f3e 0%, #0fb35b 100%);
@@ -249,6 +250,17 @@ page{
   align-items: center;
   justify-content: center;
   gap: 14rpx;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.share-btn::after{
+  border: none;
+}
+
+.share-btn-hover{
+  opacity: 0.92;
 }
 
 .share-text{

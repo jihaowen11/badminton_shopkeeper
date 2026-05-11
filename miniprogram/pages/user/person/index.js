@@ -1,7 +1,58 @@
 // pages/user/person/index.js
+const { FIND_USER } = require('../../../request/api')
+
+const DEFAULT_AVATAR = '/images/noheader.jpg'
+
+function toText(v, fallback = '') {
+  const s = v == null ? '' : String(v).trim()
+  return s || fallback
+}
+
+function toGender(gender) {
+  const g = Number(gender)
+  if (g === 1) return 'male'
+  if (g === 2) return 'female'
+  return 'unknown'
+}
+
+function formatJoinDate(createdAt) {
+  if (createdAt == null || createdAt === '') return ''
+  const raw = typeof createdAt === 'number' && createdAt < 1e12 ? createdAt * 1000 : createdAt
+  const d = new Date(raw)
+  if (Number.isNaN(d.getTime())) return ''
+  return `${d.getFullYear()}年${d.getMonth() + 1}月加入`
+}
+
+function toAvatarUrl(rawAvatar) {
+  const path = rawAvatar == null ? '' : String(rawAvatar).trim()
+  if (!path) return DEFAULT_AVATAR
+  try {
+    const app = getApp()
+    if (app && app.fun && typeof app.fun.joinStaticUrl === 'function') {
+      return app.fun.joinStaticUrl(path)
+    }
+  } catch (e) {}
+  return path || DEFAULT_AVATAR
+}
+
+function mapUserToView(user) {
+  const u = user && typeof user === 'object' ? user : {}
+  const nickName = toText(u.nickName, '未命名')
+  return {
+    avatarUrl: toAvatarUrl(u.avatar),
+    name: nickName,
+    gender: toGender(u.gender),
+    levelText: toText(u.badmintonLevel, '未定级'),
+    joinText: formatJoinDate(u.createdAt),
+    totalMatches: Number(u.totalMatches || 0),
+    winRate: toText(u.winRate, '--'),
+  }
+}
+
 Page({
   data: {
     pageScrollTop: 0,
+    openId: '',
     user: {
       avatarUrl: '/images/noheader.jpg',
       name: 'Esccry',
@@ -90,13 +141,24 @@ Page({
   },
 
   onLoad(options) {
-    // 预留：后续可通过 options.id 拉取用户信息
-    if (options && options.gender) {
-      const g = String(options.gender)
-      if (g === 'male' || g === 'female' || g === 'unknown') {
-        this.setData({ 'user.gender': g })
-      }
-    }
+    const openId = options && options.openId ? decodeURIComponent(String(options.openId)) : ''
+    this.setData({ openId })
+    this.fetchUserProfile()
+  },
+
+  fetchUserProfile() {
+    const app = getApp()
+    const openId =
+      toText(this.data.openId) ||
+      toText(app && app.globalData && app.globalData.openid) ||
+      toText(app && app.globalData && app.globalData.userInfo && app.globalData.userInfo.openId)
+    if (!openId) return Promise.resolve(null)
+    return FIND_USER({ openId })
+      .then((user) => {
+        this.setData({ user: mapUserToView(user) })
+        return user
+      })
+      .catch(() => null)
   },
 
   onPageScroll(e) {
@@ -107,9 +169,10 @@ Page({
   },
 
   onShareAppMessage() {
+    const openId = toText(this.data.openId)
     return {
       title: `${this.data.user.name} 的个人信息`,
-      path: '/pages/user/person/index',
+      path: openId ? `/pages/user/person/index?openId=${encodeURIComponent(openId)}` : '/pages/user/person/index',
     }
   },
 })

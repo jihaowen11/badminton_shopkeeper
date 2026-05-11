@@ -75,12 +75,51 @@ class ClubMemberModel {
         })
     }
 
+    /** 按俱乐部 + 用户（openId）删除一条成员记录 */
+    static async deleteByClubUser(clubId, userId) {
+        return await clubMembers.destroy({
+            where: { clubId, userId }
+        })
+    }
+
     /** 删除某俱乐部下全部成员（可与 transaction 搭配） */
     static async deleteByClubId(clubId, options = {}) {
         return await clubMembers.destroy({
             where: { clubId },
             ...options
         })
+    }
+
+    /**
+     * 设为管理员 role=admin（创建者 owner 不可改）
+     * @returns {Promise<object|null>} 更新后的成员行，不存在返回 null
+     */
+    static async setAdmin(clubId, userId) {
+        const row = await clubMembers.findOne({ where: { clubId, userId } });
+        if (!row) return null;
+        const plain = row.get({ plain: true });
+        if (plain.role === 'owner') {
+            throw new Error('创建者不能设置为管理员');
+        }
+        await clubMembers.update({ role: 'admin' }, { where: { clubId, userId } });
+        return clubMembers.findOne({ where: { clubId, userId } });
+    }
+
+    /**
+     * 移除管理员：admin → member（owner 不可改；已是 member 则不变）
+     * @returns {Promise<object|null>} 当前成员行，不存在返回 null
+     */
+    static async removeAdmin(clubId, userId) {
+        const row = await clubMembers.findOne({ where: { clubId, userId } });
+        if (!row) return null;
+        const plain = row.get({ plain: true });
+        if (plain.role === 'owner') {
+            throw new Error('不能变更创建者角色');
+        }
+        if (plain.role === 'admin') {
+            await clubMembers.update({ role: 'member' }, { where: { clubId, userId } });
+        }
+        return clubMembers.findOne({ where: { clubId, userId } });
     }
 }
 

@@ -54,9 +54,20 @@ Page({
 
     realName: '',
     phone: '',
+
+    returnUrl: '',
   },
 
-  onLoad() {
+  onLoad(options) {
+    let returnUrl = ''
+    if (options && options.returnUrl) {
+      try {
+        returnUrl = decodeURIComponent(String(options.returnUrl))
+      } catch (e) {
+        returnUrl = String(options.returnUrl)
+      }
+    }
+    this.setData({ returnUrl })
     this.hydrateFromGlobalUser()
   },
 
@@ -235,7 +246,12 @@ Page({
         app.globalData.userInfo = merged
         wx.showToast({ title: '已保存', icon: 'success' })
         this.hydrateFromGlobalUser()
-        wx.navigateBack()
+        const returnUrl = (this.data.returnUrl || '').trim()
+        if (returnUrl) {
+          wx.redirectTo({ url: returnUrl })
+        } else {
+          wx.navigateBack()
+        }
       })
       .catch(() => {})
       .finally(() => {

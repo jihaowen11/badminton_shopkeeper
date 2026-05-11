@@ -22,11 +22,18 @@
     "miniprogram": {
       "list": [
         {
+          "name": "pages/club/details/index",
+          "pathName": "pages/club/details/index",
+          "query": "id=9&mode=share",
+          "scene": null,
+          "launchMode": "default"
+        },
+        {
           "name": "pages/match/index/index",
           "pathName": "pages/match/index/index",
           "query": "",
-          "scene": null,
-          "launchMode": "default"
+          "launchMode": "default",
+          "scene": null
         },
         {
           "name": "pages/club/index/index",
