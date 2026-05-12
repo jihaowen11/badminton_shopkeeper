@@ -1,5 +1,5 @@
 // pages/match/create/index.js
-const { CLUB_MY_LIST } = require('../../../request/api')
+const { CLUB_MY_LIST, CREATE_MATCH } = require('../../../request/api')
 
 function pad2(n) {
   return String(n).padStart(2, '0')
@@ -21,13 +21,29 @@ function ymdToCnMd(ymd) {
 }
 
 function buildRoundOptions(people) {
-  const p = Number(people) || 4
-  const max = Math.max(1, Math.min(8, p))
-  const list = []
-  for (let i = 1; i <= max; i += 1) {
-    list.push({ value: i, label: `${i}场` })
+  const p = Math.max(4, Math.min(13, Number(people) || 4))
+  let rounds = []
+  if (p === 4) {
+    rounds = [3, 6, 9, 12]
+  } else if (p === 5) {
+    rounds = [5, 10, 15]
+  } else if (p === 6) {
+    rounds = [6, 9, 15]
+  } else if (p === 7) {
+    rounds = [14, 21]
+  } else {
+    const raw = (p * (p - 1)) / 4
+    if (Number.isInteger(raw)) {
+      rounds = [raw]
+    } else {
+      const low = Math.floor(raw)
+      const high = Math.ceil(raw)
+      rounds = low === high ? [low] : [low, high]
+    }
   }
-  return list
+  return rounds
+    .filter((v) => Number.isFinite(v) && v > 0)
+    .map((v) => ({ value: v, label: `${v}场` }))
 }
 
 function pickOpenId() {
@@ -59,12 +75,18 @@ function mapMyClubOptions(rawList) {
     .filter(Boolean)
 }
 
+function parseTargetScore(systemId) {
+  if (systemId === 'sg15') return 15
+  if (systemId === 'sg21') return 21
+  return null
+}
+
 Page({
   data: {
     pageScrollTop: 0,
     mode: 'on', // pre | on
 
-    matchTypes: [{ id: 'eight', title: '八人转' }],
+    matchTypes: [{ id: 'eight', title: '八人转 · 双打' }],
     selectedTypeIndex: 0,
 
     matchName: '',
@@ -74,7 +96,7 @@ Page({
 
     peopleCount: 8,
     roundOptions: buildRoundOptions(8),
-    selectedRound: 3,
+    selectedRound: buildRoundOptions(8)[0].value,
 
     systems: [
       { id: 'sg21', title: '一局定胜负·21分制' },
@@ -151,10 +173,9 @@ Page({
     const v = Number(e.detail)
     const peopleCount = Number.isFinite(v) ? v : this.data.peopleCount
     const roundOptions = buildRoundOptions(peopleCount)
-    let selectedRound = this.data.selectedRound
-    const max = roundOptions.length ? roundOptions[roundOptions.length - 1].value : 1
-    if (selectedRound > max) selectedRound = max
-    if (selectedRound < 1) selectedRound = 1
+    const current = Number(this.data.selectedRound)
+    const values = roundOptions.map((it) => it.value)
+    const selectedRound = values.includes(current) ? current : (values[0] || 1)
     this.setData({ peopleCount, roundOptions, selectedRound })
   },
 
@@ -277,23 +298,30 @@ Page({
   noop() {},
 
   onCreateMatch() {
+    const openId = pickOpenId()
     const name = (this.data.matchName || '').trim()
     const typeTitle = this.getTypeTitle()
     const system = this.data.systems.find((s) => s.id === this.data.systemId)
+    const clubId = this.data.clubId ? Number(this.data.clubId) : null
+    const startTime =
+      this.data.mode === 'pre' && this.data.matchDate && this.data.matchTime
+        ? `${this.data.matchDate} ${this.data.matchTime}:00`
+        : null
+    const address = this.data.mode === 'pre' ? (this.data.venueText || '').trim() : ''
     const payload = {
-      mode: this.data.mode, // pre | on
+      clubId,
+      type: 2, // 八人转固定双打
+      organizeMode: this.data.mode === 'pre' ? 2 : 1,
       name,
-      type: typeTitle,
-      peopleCount: this.data.peopleCount,
-      rounds: this.data.selectedRound,
-      system: system ? system.title : this.data.systemId,
-      clubId: this.data.clubId || null,
-      club: this.data.clubId ? { id: this.data.clubId, name: this.data.clubText } : null,
-      matchTime:
-        this.data.mode === 'pre'
-          ? { date: this.data.matchDate, time: this.data.matchTime }
-          : null,
-      venue: this.data.mode === 'pre' ? (this.data.venueText || '').trim() : null,
+      competitionFormat: system ? system.title : this.data.systemId,
+      targetScore: parseTargetScore(this.data.systemId),
+      bestOf: 1,
+      status: 1,
+      startTime,
+      address: address || null,
+      createdBy: openId || null,
+      playerCount: this.data.peopleCount,
+      sessionCount: this.data.selectedRound
     }
 
     if (!name) {
@@ -309,13 +337,25 @@ Page({
         wx.showToast({ title: '请选择比赛时间', icon: 'none' })
         return
       }
-      if (!payload.venue) {
+      if (!payload.address) {
         wx.showToast({ title: '请选择场地', icon: 'none' })
         return
       }
     }
-
-    console.log('[createMatch]', payload)
-    wx.showToast({ title: '已打印到控制台', icon: 'none' })
+    wx.showLoading({ title: '创建中...', mask: true })
+    CREATE_MATCH(payload)
+      .then((obj) => {
+        const id = obj && obj.id != null ? String(obj.id) : 'm3'
+        wx.showToast({ title: '创建成功', icon: 'success' })
+        setTimeout(() => {
+          wx.navigateTo({
+            url: `/pages/match/details/index?id=${encodeURIComponent(id)}&clubId=${clubId || ''}&created=1`,
+          })
+        }, 500)
+      })
+      .catch(() => {})
+      .finally(() => {
+        wx.hideLoading()
+      })
   },
 })

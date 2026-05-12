@@ -4,7 +4,7 @@ const R = require("../utils/responseBeautifier")
 class MatchController {
     static async create(ctx) {
         const req = ctx.request.body;
-        if (req && req.clubId && req.type && req.name) {
+        if (req && req.type && req.name) {
             try {
                 const ret = await MatchModel.create(req);
                 const object = await MatchModel.detail(ret.id);

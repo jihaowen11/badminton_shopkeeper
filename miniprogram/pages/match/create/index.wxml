@@ -90,7 +90,7 @@
           {{item.label}}
         </view>
       </view>
-      <view class="hint">不同人数可选场次不同（按八人转习惯规则生成）</view>
+      <view class="hint">按八人转规则生成：默认 A*(A-1)/4；6人可选6/9/15场，7人可选14/21场（A为人数）</view>
     </view>
 
     <view class="section">

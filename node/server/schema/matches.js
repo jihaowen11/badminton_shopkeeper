@@ -6,10 +6,10 @@ module.exports = function (sequelize, DataTypes) {
             allowNull: true,
             autoIncrement: true
         },
-        //俱乐部编号
+        //俱乐部编号（可选）
         clubId: {
             type: DataTypes.INTEGER,
-            allowNull: false,
+            allowNull: true,
             field: 'club_id'
         },
         //活动编号
@@ -23,6 +23,13 @@ module.exports = function (sequelize, DataTypes) {
             type: DataTypes.INTEGER,
             allowNull: false,
             field: 'type'
+        },
+        //组织方式：1现场组织 2预报名
+        organizeMode: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            defaultValue: 1,
+            field: 'organize_mode'
         },
         //比赛名称
         name: {
@@ -42,7 +49,7 @@ module.exports = function (sequelize, DataTypes) {
             allowNull: true,
             field: 'target_score'
         },
-        //几局几胜（如 3局2胜）
+        //几局几胜
         bestOf: {
             type: DataTypes.INTEGER,
             allowNull: true,
@@ -92,6 +99,18 @@ module.exports = function (sequelize, DataTypes) {
             allowNull: true,
             defaultValue: 0,
             field: 'player_count'
+        },
+        //场次
+        sessionCount: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            field: 'session_count'
+        },
+        //备注
+        remark: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            field: 'remark'
         },
         // 创建时间
         createdAt: {

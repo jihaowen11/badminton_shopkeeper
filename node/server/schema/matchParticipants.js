@@ -12,9 +12,9 @@ module.exports = function (sequelize, DataTypes) {
             allowNull: false,
             field: 'match_id'
         },
-        //用户ID
+        //用户标识（openId）
         userId: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.STRING,
             allowNull: false,
             field: 'user_id'
         },

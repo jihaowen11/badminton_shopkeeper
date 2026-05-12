@@ -1,4 +1,4 @@
-const { DataTypes } = require('sequelize');
+const { DataTypes, Op } = require('sequelize');
 const db = require('../config/db');
 const Sequelize = db.sequelize;
 const matchParticipants = require('../schema/matchParticipants')(Sequelize, DataTypes);
@@ -6,14 +6,16 @@ const matchParticipants = require('../schema/matchParticipants')(Sequelize, Data
 matchParticipants.sync({ force: false });
 
 class MatchParticipantModel {
-    static async create(data) {
+    static async create(data, options) {
         return await matchParticipants.create({
             matchId: data.matchId,
             userId: data.userId,
+            userName: data.userName,
+            userAvatar: data.userAvatar,
             number: data.number,
-            teamId: data.teamId,
+            teamId: data.teamId != null ? data.teamId : null,
             status: data.status
-        })
+        }, options)
     }
 
     static async update(id, data) {
@@ -38,12 +40,13 @@ class MatchParticipantModel {
         })
     }
 
-    static async detailByMatchUser(matchId, userId) {
+    static async detailByMatchUser(matchId, userId, options = {}) {
         return await matchParticipants.findOne({
             where: {
                 matchId,
                 userId
-            }
+            },
+            transaction: options.transaction
         })
     }
 
@@ -58,6 +61,26 @@ class MatchParticipantModel {
             where,
             order: [['id', 'DESC']]
         })
+    }
+
+    /** 某用户（openId）作为参赛者出现过的比赛 id（去重） */
+    static async matchIdsByUserOpenId(openId) {
+        const oid = openId != null ? String(openId).trim() : '';
+        if (!oid) return [];
+        const rows = await matchParticipants.findAll({
+            where: { userId: oid },
+            attributes: ['matchId'],
+        });
+        return [...new Set(rows.map((r) => r.matchId).filter((id) => id != null))];
+    }
+
+    /** 批量按比赛 id 拉取成员，按比赛 id、记录 id 升序 */
+    static async listByMatchIds(matchIds) {
+        if (!matchIds || matchIds.length === 0) return [];
+        return await matchParticipants.findAll({
+            where: { matchId: { [Op.in]: matchIds } },
+            order: [['matchId', 'ASC'], ['id', 'ASC']],
+        });
     }
 
     static async delete(id) {

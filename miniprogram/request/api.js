@@ -32,6 +32,11 @@ const SET_ADMIN = (data) => postRequest(`/clubMembers/setAdmin`, data)
 //移除管理员
 const REMOVE_ADMIN = (data) => postRequest(`/clubMembers/removeAdmin`, data)
 
+//创建比赛
+const CREATE_MATCH = (data) => postRequest(`/matches/create`, data)
+//查询比赛列表
+const MATCH_LIST = (data) => postRequest(`/matches/list`, data)
+
 module.exports = {
   GET_OPENID,
   UPDATA_USER,
@@ -45,5 +50,7 @@ module.exports = {
   INVITE_CLUB,
   EXIT_CLUB,
   SET_ADMIN,
-  REMOVE_ADMIN
+  REMOVE_ADMIN,
+  CREATE_MATCH,
+  MATCH_LIST
 }
