@@ -15,6 +15,9 @@ router.post('/detail', MatchController.detail)
 //查询比赛列表(可传 clubId/activityId/type/status)
 router.post('/list', MatchController.list)
 
+//浏览量 +1（body: id）
+router.post('/incrementViews', MatchController.incrementViews)
+
 //删除比赛
 router.post('/delete', MatchController.delete)
 

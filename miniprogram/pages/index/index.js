@@ -23,7 +23,7 @@ Page({
   },
 
   toMatch(){
-    wx.navigateTo({url:'/pages/match/create/index'})
+    wx.navigateTo({url:'/pages/match/index/index'})
   },
 
   toScoreboard(){

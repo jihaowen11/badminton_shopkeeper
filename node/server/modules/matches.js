@@ -184,6 +184,14 @@ class MatchModel {
         return { total, list, page, pageSize };
     }
 
+    /** 浏览量 +1，返回更新后的比赛行 */
+    static async incrementViews(id) {
+        const exists = await matches.findOne({ where: { id }, attributes: ['id'] });
+        if (!exists) return null;
+        await matches.increment('views', { by: 1, where: { id } });
+        return await matches.findOne({ where: { id } });
+    }
+
     static async delete(id) {
         return await matches.destroy({
             where: {

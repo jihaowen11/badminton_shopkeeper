@@ -56,6 +56,25 @@ class MatchController {
         }
     }
 
+    /** body: { id } 比赛 id，浏览量 +1 */
+    static async incrementViews(ctx) {
+        const req = ctx.request.body;
+        if (req && req.id) {
+            try {
+                const object = await MatchModel.incrementViews(req.id);
+                if (!object) {
+                    ctx.body = R.error(412, "比赛不存在");
+                    return;
+                }
+                ctx.body = R.set(object, 200, "浏览量+1");
+            } catch (err) {
+                ctx.body = R.error(412, err);
+            }
+        } else {
+            ctx.body = R.error(416);
+        }
+    }
+
     static async delete(ctx) {
         const req = ctx.request.body;
         if (req && req.id) {

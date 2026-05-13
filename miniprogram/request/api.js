@@ -36,6 +36,8 @@ const REMOVE_ADMIN = (data) => postRequest(`/clubMembers/removeAdmin`, data)
 const CREATE_MATCH = (data) => postRequest(`/matches/create`, data)
 //查询比赛列表
 const MATCH_LIST = (data) => postRequest(`/matches/list`, data)
+//比赛浏览量+1
+const MATCH_INCREMENT_VIEWS = (data) => postRequest(`/matches/incrementViews`, data)
 
 module.exports = {
   GET_OPENID,
@@ -52,5 +54,6 @@ module.exports = {
   SET_ADMIN,
   REMOVE_ADMIN,
   CREATE_MATCH,
-  MATCH_LIST
+  MATCH_LIST,
+  MATCH_INCREMENT_VIEWS
 }

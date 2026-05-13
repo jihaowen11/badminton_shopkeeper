@@ -1,5 +1,5 @@
 // pages/match/index/index.js
-const { MATCH_LIST } = require('../../../request/api')
+const { MATCH_LIST, MATCH_INCREMENT_VIEWS } = require('../../../request/api')
 
 const DEFAULT_AVATAR = '/images/noheader.jpg'
 
@@ -167,7 +167,11 @@ Page({
   onTapMatch(e) {
     const id = e.currentTarget.dataset.id
     if (!id) return
-    wx.navigateTo({ url: `/pages/match/details/index?id=${id}` })
+    MATCH_INCREMENT_VIEWS({ id })
+      .catch(() => null)
+      .finally(() => {
+        wx.navigateTo({ url: `/pages/match/details/index?id=${id}` })
+      })
   },
 
   onShareAppMessage() {
