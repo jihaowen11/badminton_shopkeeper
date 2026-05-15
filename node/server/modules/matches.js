@@ -4,6 +4,7 @@ const Sequelize = db.sequelize;
 const matches = require('../schema/matches')(Sequelize, DataTypes);
 const MatchParticipantModel = require('./matchParticipants');
 const UserModel = require('./users');
+const ClubModel = require('./clubs');
 
 matches.sync({ force: false });
 
@@ -106,6 +107,44 @@ class MatchModel {
         })
     }
 
+    /**
+     * 比赛详情：基本信息 + 组织者(users) + 报名人员(match_participants + user)
+     * @returns {Promise<{ match: object, organizer: object|null, participants: object[] }|null>}
+     */
+    static async detailWithExtras(id) {
+        const matchRow = await matches.findOne({ where: { id } });
+        if (!matchRow) return null;
+        const match = matchRow.get({ plain: true });
+
+        const createdBy = match.createdBy != null ? String(match.createdBy).trim() : '';
+        let organizer = null;
+        if (createdBy) {
+            const map = await UserModel.mapProfileByOpenIds([createdBy]);
+            organizer = map.get(createdBy) || null;
+        }
+
+        const partRows = await MatchParticipantModel.listByMatchIds([id]);
+        const plains = partRows.map((r) => r.get({ plain: true }));
+        const openIds = plains.map((p) => p.userId).filter(Boolean);
+        const userMap = await UserModel.mapProfileByOpenIds(openIds);
+        const participants = plains.map((p) => {
+            const uid = p.userId != null ? String(p.userId).trim() : '';
+            const user = uid ? userMap.get(uid) || null : null;
+            return { ...p, user };
+        });
+
+        let club = null;
+        if (match.clubId != null && match.clubId !== '') {
+            const cid = Number(match.clubId);
+            if (Number.isFinite(cid)) {
+                const clubMap = await ClubModel.mapPlainByIds([cid]);
+                club = clubMap.get(cid) || null;
+            }
+        }
+
+        return { match, organizer, participants, club };
+    }
+
     static async list(data = {}) {
         const openIdRaw =
             data.openId != null && data.openId !== ''
@@ -125,9 +164,19 @@ class MatchModel {
         const order = [['createdAt', 'DESC']];
 
         if (!openIdRaw) {
-            return await matches.findAll({
+            const rows = await matches.findAll({
                 where: baseWhere,
                 order,
+            });
+            const clubIds = [...new Set(
+                rows.map((r) => r.get({ plain: true }).clubId).filter((cid) => cid != null && cid !== '')
+            )];
+            const clubMap = await ClubModel.mapPlainByIds(clubIds);
+            return rows.map((r) => {
+                const match = r.get({ plain: true });
+                const cid = match.clubId != null ? Number(match.clubId) : NaN;
+                const club = Number.isFinite(cid) ? (clubMap.get(cid) || null) : null;
+                return { ...match, club };
             });
         }
 
@@ -168,6 +217,11 @@ class MatchModel {
         const allProfileIds = [...new Set([...organizerIds, ...participantIds].map((x) => String(x).trim()))];
         const userMap = await UserModel.mapProfileByOpenIds(allProfileIds);
 
+        const clubIds = [...new Set(
+            matchRows.map((m) => m.get({ plain: true }).clubId).filter((cid) => cid != null && cid !== '')
+        )];
+        const clubMap = await ClubModel.mapPlainByIds(clubIds);
+
         const list = matchRows.map((m) => {
             const match = m.get({ plain: true });
             const oby = match.createdBy != null ? String(match.createdBy).trim() : '';
@@ -178,7 +232,9 @@ class MatchModel {
                 const user = uid ? userMap.get(uid) || null : null;
                 return { ...p, user };
             });
-            return { match, organizer, participants };
+            const cid = match.clubId != null ? Number(match.clubId) : NaN;
+            const club = Number.isFinite(cid) ? (clubMap.get(cid) || null) : null;
+            return { match, organizer, participants, club };
         });
 
         return { total, list, page, pageSize };
@@ -189,6 +245,18 @@ class MatchModel {
         const exists = await matches.findOne({ where: { id }, attributes: ['id'] });
         if (!exists) return null;
         await matches.increment('views', { by: 1, where: { id } });
+        return await matches.findOne({ where: { id } });
+    }
+
+    /** 仅更新状态，返回更新后的比赛行；无该 id 返回 null */
+    static async updateStatus(id, status) {
+        const exists = await matches.findOne({ where: { id }, attributes: ['id'] });
+        if (!exists) return null;
+        const st = Number(status);
+        if (!Number.isFinite(st)) {
+            throw new Error('状态无效');
+        }
+        await matches.update({ status: st }, { where: { id } });
         return await matches.findOne({ where: { id } });
     }
 

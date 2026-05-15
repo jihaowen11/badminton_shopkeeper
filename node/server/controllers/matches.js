@@ -36,7 +36,11 @@ class MatchController {
         const req = ctx.request.body;
         if (req && req.id) {
             try {
-                const object = await MatchModel.detail(req.id);
+                const object = await MatchModel.detailWithExtras(req.id);
+                if (!object) {
+                    ctx.body = R.error(412, "比赛不存在");
+                    return;
+                }
                 ctx.body = R.set(object, 200);
             } catch (err) {
                 ctx.body = R.error(412, err);
@@ -69,6 +73,31 @@ class MatchController {
                 ctx.body = R.set(object, 200, "浏览量+1");
             } catch (err) {
                 ctx.body = R.error(412, err);
+            }
+        } else {
+            ctx.body = R.error(416);
+        }
+    }
+
+    /** body: { id, status } 状态：1报名中 2进行中 3已结束 4中断 5取消 */
+    static async updateStatus(ctx) {
+        const req = ctx.request.body;
+        const hasStatus =
+            req &&
+            req.status !== undefined &&
+            req.status !== null &&
+            req.status !== '';
+        if (req && req.id && hasStatus) {
+            try {
+                const object = await MatchModel.updateStatus(req.id, req.status);
+                if (!object) {
+                    ctx.body = R.error(412, "比赛不存在");
+                    return;
+                }
+                ctx.body = R.set(object, 200, "状态已更新");
+            } catch (err) {
+                const tip = err && err.message ? err.message : String(err);
+                ctx.body = R.error(412, tip);
             }
         } else {
             ctx.body = R.error(416);

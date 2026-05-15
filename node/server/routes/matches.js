@@ -9,6 +9,9 @@ router.post('/create', MatchController.create)
 //更新比赛
 router.post('/update', MatchController.update)
 
+//修改比赛状态（body: id, status）
+router.post('/updateStatus', MatchController.updateStatus)
+
 //查询比赛详情
 router.post('/detail', MatchController.detail)
 

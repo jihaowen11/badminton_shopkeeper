@@ -101,6 +101,24 @@ class ClubModel {
         })
     }
 
+    /** 批量按俱乐部 id 取平铺对象，返回 Map<id, plain> */
+    static async mapPlainByIds(ids) {
+        const uniq = [...new Set(
+            (ids || [])
+                .map((x) => (x != null && x !== '' ? Number(x) : NaN))
+                .filter((x) => Number.isFinite(x))
+        )];
+        if (uniq.length === 0) return new Map();
+        const rows = await clubs.findAll({
+            where: { id: { [Op.in]: uniq } },
+        });
+        const map = new Map();
+        for (const r of rows) {
+            map.set(r.id, r.get({ plain: true }));
+        }
+        return map;
+    }
+
     /** 俱乐部基本信息 + 成员列表（平铺对象，供接口返回）；成员含 users 关联字段 user */
     static async detailWithMembers(id) {
         const club = await clubs.findOne({ where: { id } });

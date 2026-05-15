@@ -16,6 +16,16 @@ page {
   padding-bottom: calc(200rpx + env(safe-area-inset-bottom));
 }
 
+/* 分享用 canvas：5:4 逻辑像素 500×400，移出可视区域避免遮挡 */
+.share-poster-canvas {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  width: 500px;
+  height: 400px;
+  overflow: hidden;
+}
+
 .hero-bg {
   position: absolute;
   left: 0;
@@ -252,6 +262,7 @@ page {
   color: #ffffff;
   border: 3rpx solid #ffffff;
   box-shadow: 0 4rpx 10rpx rgba(0, 0, 0, 0.08);
+  overflow: hidden;
 }
 
 .mini-avatar--green {
@@ -264,6 +275,13 @@ page {
 
 .mini-avatar--pink {
   background: linear-gradient(145deg, #ff8ab0, #ff6b9d);
+}
+
+.mini-avatar-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 999rpx;
 }
 
 .org-row {
@@ -283,10 +301,18 @@ page {
   font-weight: 900;
   color: #ffffff;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .org-avatar--orange {
   background: linear-gradient(145deg, #ffb300, #ff9800);
+}
+
+.org-avatar-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 999rpx;
 }
 
 .org-name {
@@ -643,6 +669,12 @@ page {
 
 .footer-forward {
   flex: 1;
+  background: linear-gradient(90deg, #ffb300 0%, #ff9800 100%);
+  box-shadow: 0 10rpx 22rpx rgba(255, 152, 0, 0.28);
+}
+
+.footer-action-btn {
+  flex: 1;
   margin: 0;
   height: 88rpx;
   line-height: 88rpx;
@@ -650,18 +682,27 @@ page {
   font-size: 30rpx;
   font-weight: 900;
   color: #ffffff;
-  background: linear-gradient(90deg, #ffb300 0%, #ff9800 100%);
   border: none;
-  box-shadow: 0 10rpx 22rpx rgba(255, 152, 0, 0.28);
-  padding: 0;
+  padding: 0 10rpx;
+  text-align: center;
 }
 
-.footer-forward::after {
+.footer-action-btn::after {
   border: none;
 }
 
-.footer-forward-hover {
+.footer-action-btn-hover {
   opacity: 0.92;
+}
+
+.footer-club {
+  background: linear-gradient(90deg, #0a8f3e 0%, #0fb35b 100%);
+  box-shadow: 0 10rpx 22rpx rgba(10, 143, 62, 0.22);
+}
+
+.footer-cancel {
+  background: linear-gradient(90deg, #ff7875 0%, #ff4d4f 100%);
+  box-shadow: 0 10rpx 22rpx rgba(255, 77, 79, 0.24);
 }
 
 .footer-status {
@@ -681,6 +722,254 @@ page {
 }
 
 .footer-status--open {
+  background: linear-gradient(90deg, #0a8f3e 0%, #0fb35b 100%);
+  box-shadow: 0 10rpx 22rpx rgba(10, 143, 62, 0.22);
+}
+
+/* ---------- 邀请俱乐部成员弹窗（列表样式对齐 club/index 卡片） ---------- */
+.invite-club-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 200;
+  background: rgba(18, 22, 26, 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0 24rpx;
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+}
+
+.invite-club-dialog {
+  width: 100%;
+  max-height: 78vh;
+  background: #f7fbf9;
+  border-radius: 28rpx 28rpx 20rpx 20rpx;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -12rpx 40rpx rgba(0, 0, 0, 0.12);
+}
+
+.invite-club-head {
+  flex-shrink: 0;
+  padding: 28rpx 28rpx 16rpx;
+  background: #ffffff;
+  border-bottom: 1px solid rgba(18, 22, 26, 0.06);
+}
+
+.invite-club-title {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 900;
+  color: #12161a;
+}
+
+.invite-club-sub {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: rgba(18, 22, 26, 0.55);
+}
+
+.invite-club-tip {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: rgba(10, 143, 62, 0.85);
+  line-height: 1.45;
+}
+
+.invite-club-loading {
+  padding: 48rpx;
+  text-align: center;
+  font-size: 28rpx;
+  color: rgba(18, 22, 26, 0.45);
+  font-weight: 600;
+}
+
+.invite-club-scroll {
+  flex: 1;
+  min-height: 200rpx;
+  max-height: 52vh;
+  box-sizing: border-box;
+}
+
+.invite-club-list {
+  padding: 20rpx 24rpx 12rpx;
+  box-sizing: border-box;
+}
+
+.invite-club-card {
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 28rpx 24rpx;
+  margin-bottom: 22rpx;
+  box-shadow: 0 5rpx 16rpx rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(18, 22, 26, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 22rpx;
+}
+
+.invite-club-card--disabled {
+  opacity: 0.55;
+}
+
+.invite-club-card-hover {
+  opacity: 0.96;
+}
+
+.invite-club-dialog .club-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.invite-club-dialog .club-avatar {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 999rpx;
+  background: rgba(10, 143, 62, 0.14);
+  color: #0a8f3e;
+  font-size: 40rpx;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.invite-club-dialog .club-avatar-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 999rpx;
+}
+
+.invite-club-dialog .club-crown {
+  position: absolute;
+  right: -4rpx;
+  bottom: -2rpx;
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 999rpx;
+  background: #ff9800;
+  border: 4rpx solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6rpx 12rpx rgba(255, 152, 0, 0.35);
+}
+
+.invite-club-dialog .club-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.invite-club-dialog .club-name {
+  font-size: 32rpx;
+  font-weight: 900;
+  color: rgba(18, 22, 26, 0.9);
+  line-height: 1.25;
+  margin-bottom: 12rpx;
+}
+
+.invite-club-dialog .club-meta-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.invite-club-dialog .meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.invite-club-dialog .meta-text {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: rgba(18, 22, 26, 0.45);
+  flex: 1;
+  min-width: 0;
+}
+
+.invite-club-dialog .icon {
+  position: relative;
+  top: 4rpx;
+  left: 0;
+}
+
+.club-check {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 999rpx;
+  background: rgba(18, 22, 26, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.invite-check {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 10rpx;
+  border: 2rpx solid rgba(18, 22, 26, 0.22);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.invite-check--on {
+  background: #0a8f3e;
+  border-color: #0a8f3e;
+}
+
+.invite-check--disabled {
+  border-color: rgba(18, 22, 26, 0.12);
+  background: rgba(18, 22, 26, 0.04);
+}
+
+.invite-club-footer {
+  flex-shrink: 0;
+  display: flex;
+  gap: 18rpx;
+  padding: 16rpx 24rpx 20rpx;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  background: #ffffff;
+  border-top: 1px solid rgba(18, 22, 26, 0.06);
+}
+
+.invite-club-btn {
+  flex: 1;
+  margin: 0;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 999rpx;
+  font-size: 30rpx;
+  font-weight: 900;
+  border: none;
+  padding: 0;
+}
+
+.invite-club-btn::after {
+  border: none;
+}
+
+.invite-club-btn--ghost {
+  background: rgba(18, 22, 26, 0.06);
+  color: rgba(18, 22, 26, 0.72);
+}
+
+.invite-club-btn--primary {
+  color: #ffffff;
   background: linear-gradient(90deg, #0a8f3e 0%, #0fb35b 100%);
   box-shadow: 0 10rpx 22rpx rgba(10, 143, 62, 0.22);
 }

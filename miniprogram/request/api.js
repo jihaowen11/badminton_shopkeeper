@@ -38,6 +38,12 @@ const CREATE_MATCH = (data) => postRequest(`/matches/create`, data)
 const MATCH_LIST = (data) => postRequest(`/matches/list`, data)
 //比赛浏览量+1
 const MATCH_INCREMENT_VIEWS = (data) => postRequest(`/matches/incrementViews`, data)
+//查询比赛详情
+const MATCH_DES = (data) => postRequest(`/matches/detail`, data)
+//更新赛事状态
+const MATCH_UPDATE_STATUS = (data) => postRequest(`/matches/updateStatus`, data)
+/** 邀请俱乐部成员报名比赛（后端待接入，当前请求失败时由页面兜底提示） */
+const MATCH_INVITE_CLUB_MEMBERS = (data) => postRequest(`/matches/inviteClubMembers`, data)
 
 module.exports = {
   GET_OPENID,
@@ -55,5 +61,8 @@ module.exports = {
   REMOVE_ADMIN,
   CREATE_MATCH,
   MATCH_LIST,
-  MATCH_INCREMENT_VIEWS
+  MATCH_INCREMENT_VIEWS,
+  MATCH_DES,
+  MATCH_UPDATE_STATUS,
+  MATCH_INVITE_CLUB_MEMBERS
 }

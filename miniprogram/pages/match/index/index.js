@@ -74,6 +74,7 @@ function mapMatchItem(row) {
   const match = (row && row.match) || {}
   const organizer = (row && row.organizer) || {}
   const participants = Array.isArray(row && row.participants) ? row.participants : []
+  const club = (row && row.club) || null
   const dt = formatDateTime(match.startTime, match.createdAt)
   const st = mapStatus(match.status)
   const organizerName = toText(organizer.nickName || organizer.name, '球友')
@@ -89,7 +90,7 @@ function mapMatchItem(row) {
     timeText: dt.timeText,
     ruleText: formatText ? `${typeText}，${formatText}` : typeText,
     orgAvatar: toAvatarUrl(organizer.avatar),
-    orgText: `${organizerName}组织`,
+    orgText: `${organizerName}组织 ${club ? `· ${club.name}` : ''}`,
     joined: participants.length,
     capacity: Number(match.playerCount || 0),
     views: Number(match.views || 0),

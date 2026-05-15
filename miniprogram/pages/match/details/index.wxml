@@ -1,5 +1,8 @@
 <!--pages/match/details/index.wxml-->
 <view class="page">
+  <!-- 分享海报：由 JS 按比赛信息绘制 5:4，导出为临时路径供 onShareAppMessage 使用（不可直接用 WXML 转图） -->
+  <canvas type="2d" id="sharePosterCanvas" class="share-poster-canvas"></canvas>
+
   <back  scrollTop="{{pageScrollTop}}"/>
 
   <view class="hero-bg" aria-hidden="true">
@@ -52,6 +55,11 @@
         <text class="info-text"><text class="info-k">人数：</text>{{match.peopleLine}}</text>
       </view>
 
+      <view wx:if="{{match.clubLine}}" class="info-row">
+        <van-icon class="icon" name="location-o" size="14" color="rgba(18,22,26,0.45)" />
+        <text class="info-text"><text class="info-k">俱乐部：</text>{{match.clubLine}}</text>
+      </view>
+
 
       <view class="match-divider"></view>
 
@@ -72,7 +80,10 @@
             wx:for-item="reg"
             wx:key="id"
             class="mini-avatar mini-avatar--{{reg.tone}}"
-          >{{reg.abbr}}</view>
+          >
+            <image wx:if="{{reg.avatarUrl}}" class="mini-avatar-img" mode="aspectFill" src="{{reg.avatarUrl}}" />
+            <text wx:else>{{reg.abbr}}</text>
+          </view>
         </view>
         <van-icon class="icon" name="arrow" size="14" color="rgba(18,22,26,0.35)" />
       </view>
@@ -80,7 +91,10 @@
 
     <view class="sub-card" bindtap="onTapOrganizer" hover-class="sub-card-hover">
       <view class="org-row">
-        <view class="org-avatar org-avatar--{{organizer.tone}}">{{organizer.abbr}}</view>
+        <view class="org-avatar org-avatar--{{organizer.tone}}">
+          <image wx:if="{{organizer.avatarUrl}}" class="org-avatar-img" mode="aspectFill" src="{{organizer.avatarUrl}}" />
+          <text wx:else>{{organizer.abbr}}</text>
+        </view>
         <text class="org-name">{{organizer.name}}(组织者)</text>
         <van-icon class="icon org-arrow" name="arrow" size="14" color="rgba(18,22,26,0.35)" />
       </view>
@@ -178,8 +192,78 @@
 
   <view class="page-footer">
     <view class="footer-actions">
-      <button class="footer-forward" open-type="share" hover-class="footer-forward-hover">转发</button>
-      <view class="footer-status footer-status--{{match.status}}">{{match.actionText}}</view>
+      <block wx:if="{{canManageFooter && showInviteClub}}">
+        <button class="footer-action-btn footer-forward" open-type="share" hover-class="footer-action-btn-hover">邀请好友</button>
+        <button class="footer-action-btn footer-club" bindtap="onInviteClub" hover-class="footer-action-btn-hover">邀请俱乐部</button>
+        <button class="footer-action-btn footer-cancel" bindtap="onCancelMatch" hover-class="footer-action-btn-hover">取消赛事</button>
+      </block>
+      <block wx:elif="{{canManageFooter}}">
+        <button class="footer-action-btn footer-forward" open-type="share" hover-class="footer-action-btn-hover">邀请好友</button>
+        <button class="footer-action-btn footer-cancel" bindtap="onCancelMatch" hover-class="footer-action-btn-hover">取消赛事</button>
+      </block>
+      <block wx:else>
+        <button class="footer-action-btn footer-forward" open-type="share" hover-class="footer-action-btn-hover">转发</button>
+        <view class="footer-status footer-status--{{match.status}}">{{match.actionText}}</view>
+      </block>
+    </view>
+  </view>
+
+  <!-- 邀请俱乐部成员 -->
+  <view wx:if="{{inviteClubVisible}}" class="invite-club-mask" bindtap="onCloseInviteClubModal">
+    <view class="invite-club-dialog" catchtap="stopInviteModalBubble">
+      <view class="invite-club-head">
+        <text class="invite-club-title">邀请俱乐部成员</text>
+        <text class="invite-club-sub">{{inviteClubName}}</text>
+        <text class="invite-club-tip">最多可选 {{inviteSlotsMax}} 人（计划 {{match.capacity}} 人，已报 {{match.joined}} 人）</text>
+      </view>
+
+      <view wx:if="{{inviteClubLoading}}" class="invite-club-loading">加载中...</view>
+
+      <scroll-view wx:else scroll-y class="invite-club-scroll" show-scrollbar="{{false}}">
+        <view class="invite-club-list">
+          <view
+            wx:for="{{inviteMemberList}}"
+            wx:key="openId"
+            class="invite-club-card {{item.disabled ? 'invite-club-card--disabled' : ''}}"
+            data-open-id="{{item.openId}}"
+            bindtap="onToggleInviteMember"
+            hover-class="{{item.disabled ? '' : 'invite-club-card-hover'}}"
+          >
+            <view class="club-avatar-wrap">
+              <view class="club-avatar">
+                <image wx:if="{{item.avatarUrl}}" class="club-avatar-img" src="{{item.avatarUrl}}" mode="aspectFill" />
+                <text wx:else>{{item.abbr}}</text>
+              </view>
+              <view wx:if="{{item.isPresident}}" class="club-crown">
+                <van-icon name="gem" size="24rpx" color="#ffffff" />
+              </view>
+            </view>
+            <view class="club-main">
+              <view class="club-name">{{item.name}}</view>
+              <view class="club-meta-col">
+                <view class="meta-row">
+                  <van-icon class="icon" name="friends-o" size="28rpx" color="rgba(18,22,26,0.38)" />
+                  <text class="meta-text">{{item.metaLine1}}</text>
+                </view>
+                <view class="meta-row">
+                  <van-icon class="icon" name="award-o" size="28rpx" color="rgba(18,22,26,0.38)" />
+                  <text class="meta-text">{{item.metaLine2}}</text>
+                </view>
+              </view>
+            </view>
+            <view class="club-check" data-open-id="{{item.openId}}" catchtap="onToggleInviteMember">
+              <view class="invite-check {{item.checked ? 'invite-check--on' : ''}} {{item.disabled ? 'invite-check--disabled' : ''}}">
+                <van-icon wx:if="{{item.checked}}" name="success" size="28rpx" color="#ffffff" />
+              </view>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+
+      <view wx:if="{{!inviteClubLoading}}" class="invite-club-footer">
+        <button class="invite-club-btn invite-club-btn--ghost" bindtap="onCloseInviteClubModal">取消</button>
+        <button class="invite-club-btn invite-club-btn--primary" bindtap="onConfirmInviteClub">确定邀请</button>
+      </view>
     </view>
   </view>
 </view>
