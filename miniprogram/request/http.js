@@ -63,7 +63,8 @@ function CreateUploadHeader(url) {
 }
 
 //post请求，数据在body中
-function postRequest(url, data) {
+function postRequest(url, data, options) {
+  const opts = options && typeof options === 'object' ? options : {}
   wx.showNavigationBarLoading()
   let header = CreateHeader(url, 'POST');
   return new Promise((resolve, reject) => {
@@ -77,7 +78,11 @@ function postRequest(url, data) {
           //200: 服务端业务处理正常结束
           let { code, object, message } = res.data
           if (code == 200) {
-            resolve(object)
+            if (opts.withMessage) {
+              resolve({ object, message: message || '' })
+            } else {
+              resolve(object)
+            }
           }  else {
             reject(object)
             showToast(message)

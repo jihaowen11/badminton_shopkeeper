@@ -201,9 +201,30 @@
         <button class="footer-action-btn footer-forward" open-type="share" hover-class="footer-action-btn-hover">邀请好友</button>
         <button class="footer-action-btn footer-cancel" bindtap="onCancelMatch" hover-class="footer-action-btn-hover">取消赛事</button>
       </block>
+      <block wx:elif="{{isShareMode && match.statusCode === 1}}">
+        <button
+          class="footer-action-btn footer-join footer-share-btn"
+          bindtap="onJoinMatch"
+          hover-class="footer-action-btn-hover"
+          disabled="{{hasJoined || joining || (match.capacity > 0 && match.joined >= match.capacity)}}"
+        >
+          {{hasJoined ? '已报名' : (joining ? '报名中...' : ((match.capacity > 0 && match.joined >= match.capacity) ? '报名已满' : '我要报名'))}}
+        </button>
+      </block>
       <block wx:else>
         <button class="footer-action-btn footer-forward" open-type="share" hover-class="footer-action-btn-hover">转发</button>
-        <view class="footer-status footer-status--{{match.status}}">{{match.actionText}}</view>
+        <button
+          wx:if="{{match.statusCode === 1 && !hasJoined}}"
+          class="footer-action-btn footer-status footer-status--open"
+          bindtap="onJoinMatch"
+          hover-class="footer-action-btn-hover"
+          disabled="{{joining || (match.capacity > 0 && match.joined >= match.capacity)}}"
+        >
+          {{joining ? '报名中...' : ((match.capacity > 0 && match.joined >= match.capacity) ? '报名已满' : '我要报名')}}
+        </button>
+        <view wx:else class="footer-status footer-status--{{match.status}}">
+          {{hasJoined && match.statusCode === 1 ? '已报名' : match.actionText}}
+        </view>
       </block>
     </view>
   </view>

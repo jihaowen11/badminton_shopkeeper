@@ -5,6 +5,7 @@ const matches = require('../schema/matches')(Sequelize, DataTypes);
 const MatchParticipantModel = require('./matchParticipants');
 const UserModel = require('./users');
 const ClubModel = require('./clubs');
+const ClubMemberModel = require('./clubMembers');
 
 matches.sync({ force: false });
 
@@ -266,6 +267,79 @@ class MatchModel {
                 id
             }
         })
+    }
+
+    /**
+     * 邀请俱乐部成员加入比赛（按 openId 查用户资料后写入 match_participants）
+     * @returns {Promise<{ created: object[], skipped: { openId: string, reason: string }[] }>}
+     */
+    static async inviteClubMembers(clubId, matchId, openIds) {
+        const matchRow = await matches.findOne({ where: { id: matchId } });
+        if (!matchRow) {
+            throw new Error('比赛不存在');
+        }
+        const match = matchRow.get({ plain: true });
+        if (Number(match.clubId) !== Number(clubId)) {
+            throw new Error('比赛不属于该俱乐部');
+        }
+
+        const ids = [...new Set((openIds || []).map((id) => String(id).trim()).filter(Boolean))];
+        if (ids.length === 0) {
+            throw new Error('openIds 不能为空');
+        }
+
+        const userMap = await UserModel.mapProfileByOpenIds(ids);
+        const t = await Sequelize.transaction();
+        try {
+            const clubMemberMap = await ClubMemberModel.mapByClubAndOpenIds(clubId, ids, { transaction: t });
+            const existingParts = await MatchParticipantModel.listByMatchIds([matchId], { transaction: t });
+            let maxNumber = 0;
+            for (const row of existingParts) {
+                const n = Number(row.number);
+                if (Number.isFinite(n) && n > maxNumber) maxNumber = n;
+            }
+
+            const created = [];
+            const skipped = [];
+
+            for (const openId of ids) {
+                const existed = await MatchParticipantModel.detailByMatchUser(matchId, openId, { transaction: t });
+                if (existed) {
+                    skipped.push({ openId, reason: '已报名' });
+                    continue;
+                }
+
+                const clubMember = clubMemberMap.get(openId);
+                if (!clubMember) {
+                    skipped.push({ openId, reason: '非俱乐部成员' });
+                    continue;
+                }
+
+                const user = userMap.get(openId);
+                if (!user) {
+                    skipped.push({ openId, reason: '用户不存在' });
+                    continue;
+                }
+
+                maxNumber += 1;
+                const ret = await MatchParticipantModel.create({
+                    matchId,
+                    userId: openId,
+                    userName: user.nickName || user.name || clubMember.userName || null,
+                    userAvatar: user.avatar || clubMember.userAvatar || null,
+                    number: maxNumber,
+                    teamId: null,
+                    status: 1,
+                }, { transaction: t });
+                created.push(ret.get({ plain: true }));
+            }
+
+            await t.commit();
+            return { created, skipped };
+        } catch (e) {
+            await t.rollback();
+            throw e;
+        }
     }
 }
 

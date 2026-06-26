@@ -11,7 +11,8 @@
     "pages/user/info/index",
     "pages/user/person/index",
     "pages/scoreboard/index",
-    "pages/cost/index"
+    "pages/cost/index",
+    "pages/match/signList/index"
   ],
   "tabBar": {
     "custom": true,

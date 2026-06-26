@@ -705,6 +705,20 @@ page {
   box-shadow: 0 10rpx 22rpx rgba(255, 77, 79, 0.24);
 }
 
+.footer-join {
+  background: linear-gradient(90deg, #0a8f3e 0%, #0fb35b 100%);
+  box-shadow: 0 10rpx 22rpx rgba(10, 143, 62, 0.22);
+}
+
+.footer-share-btn {
+  flex: 1;
+  width: 100%;
+}
+
+.footer-share-btn::after {
+  border: none;
+}
+
 .footer-status {
   flex: 1;
   height: 88rpx;

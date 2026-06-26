@@ -24,4 +24,7 @@ router.post('/incrementViews', MatchController.incrementViews)
 //删除比赛
 router.post('/delete', MatchController.delete)
 
+//邀请俱乐部成员加入比赛（body: clubId, matchId, openIds）
+router.post('/inviteClubMembers', MatchController.inviteClubMembers)
+
 module.exports = router

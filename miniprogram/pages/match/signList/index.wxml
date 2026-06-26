@@ -1,0 +1,54 @@
+<!--pages/match/signList/index.wxml-->
+<view class="page">
+  <back scrollTop="{{pageScrollTop}}" />
+
+  <view class="hero-bg" aria-hidden="true">
+    <view class="hero-ring"></view>
+    <view class="hero-ring hero-ring-2"></view>
+  </view>
+
+  <view class="header">
+    <view class="header-title">报名列表</view>
+    <view class="header-sub">{{match.title}}</view>
+    <view class="header-count">已报名 {{match.joined}}/{{match.capacity || '--'}} 人</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="state-box">加载中...</view>
+
+  <view wx:elif="{{members.length === 0}}" class="state-box state-box--empty">
+    <van-icon name="friends-o" size="48" color="rgba(10,143,62,0.35)" />
+    <text class="state-text">暂无报名人员</text>
+  </view>
+
+  <view wx:else class="list-wrap">
+    <view
+      wx:for="{{members}}"
+      wx:key="id"
+      class="member-card"
+      data-open-id="{{item.openId}}"
+      bindtap="onTapMember"
+      hover-class="member-card-hover"
+    >
+      <view class="member-avatar member-avatar--{{item.tone}}">
+        <image wx:if="{{item.avatarUrl}}" class="member-avatar-img" src="{{item.avatarUrl}}" mode="aspectFill" />
+        <text wx:else>{{item.abbr}}</text>
+      </view>
+      <view class="member-main">
+        <view class="member-name-row">
+          <text class="member-name">{{item.name}}</text>
+          <view wx:if="{{item.isOrganizer}}" class="role-pill">组织者</view>
+        </view>
+      </view>
+      <view
+        wx:if="{{canCancelSign}}"
+        class="member-action"
+        data-id="{{item.id}}"
+        data-name="{{item.name}}"
+        catchtap="onCancelSign"
+        hover-class="member-action-hover"
+      >
+        取消报名
+      </view>
+    </view>
+  </view>
+</view>

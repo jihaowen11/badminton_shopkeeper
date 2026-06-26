@@ -4,6 +4,8 @@ const {
   MATCH_UPDATE_STATUS,
   CLUB_DES,
   MATCH_INVITE_CLUB_MEMBERS,
+  MATCH_INCREMENT_VIEWS,
+  MATCH_JOIN,
 } = require('../../../request/api')
 
 function pad2(n) {
@@ -106,6 +108,22 @@ function buildRegisteredOpenIdSet(participants) {
     if (oid) set.add(oid)
   })
   return set
+}
+
+function hasJoinedMatch(registeredSet, openId) {
+  const oid = toText(openId)
+  if (!oid) return false
+  return registeredSet.has(oid)
+}
+
+function isProfileCompleted(userInfo) {
+  const u = userInfo && typeof userInfo === 'object' ? userInfo : {}
+  const nick = toText(u.nickName)
+  const avatar = toText(u.avatar)
+  if (!nick || nick.indexOf('羽球人') === 0) return false
+  if (!avatar) return false
+  if (avatar.indexOf('/images/') === 0) return false
+  return true
 }
 
 function mapMatch(match, participants, club) {
@@ -429,19 +447,43 @@ Page({
     inviteMemberList: [],
     /** 计划人数 - 已报名人数，即本次最多可选人数 */
     inviteSlotsMax: 0,
+    /** 从分享链接进入 */
+    isShareMode: false,
+    /** 当前用户是否已报名 */
+    hasJoined: false,
+    joining: false,
   },
 
   onLoad(options) {
     const id = options.id ? String(options.id) : 'm3'
+    const mode = options && options.mode
+    const isShareMode = String(mode || '').toLowerCase() === 'share'
     this.setData({
       matchId: id,
+      isShareMode,
       pairings: buildMockPairings(),
       rankings: buildMockRankings(),
     })
     this.fetchMatchDetail(id)
+    if (isShareMode && id) {
+      MATCH_INCREMENT_VIEWS({ id }).catch(() => {})
+    }
   },
 
-  fetchMatchDetail(id) {
+  onShow() {
+    if (!this._pageReady) {
+      this._pageReady = true
+      return
+    }
+    const id = toText(this.data.matchId)
+    if (id) {
+      this.fetchMatchDetail(id, { refreshPoster: false })
+    }
+  },
+
+  fetchMatchDetail(id, options) {
+    const opts = options && typeof options === 'object' ? options : {}
+    const refreshPoster = opts.refreshPoster !== false
     return MATCH_DES({ id })
       .then((ret) => {
         const payload = ret && typeof ret === 'object' ? ret : {}
@@ -456,19 +498,25 @@ Page({
           !!currentOpenId &&
           currentOpenId === createdBy
         const showInviteClub = canManageFooter && !!mappedMatch.hasClub
+        const hasJoined = hasJoinedMatch(registeredSet, currentOpenId)
+        const nextData = {
+          match: mappedMatch,
+          organizer: mapOrganizer(payload.organizer),
+          regPreview: mapRegPreview(participants),
+          pairings: buildMockPairings(),
+          rankings: buildMockRankings(),
+          canManageFooter,
+          showInviteClub,
+          registeredOpenIds,
+          hasJoined,
+        }
+        if (refreshPoster) {
+          nextData.shareImageUrl = ''
+        }
         this.setData(
-          {
-            match: mappedMatch,
-            organizer: mapOrganizer(payload.organizer),
-            regPreview: mapRegPreview(participants),
-            pairings: buildMockPairings(),
-            rankings: buildMockRankings(),
-            canManageFooter,
-            showInviteClub,
-            shareImageUrl: '',
-            registeredOpenIds,
-          },
+          nextData,
           () => {
+            if (!refreshPoster) return
             setTimeout(() => {
               this.renderSharePoster()
                 .then((path) => {
@@ -545,13 +593,86 @@ Page({
 
 
   onTapRegList() {
-    wx.showToast({ title: '报名列表开发中', icon: 'none' })
+    const matchId = toText(this.data.matchId)
+    if (!matchId) return
+    wx.navigateTo({
+      url: `/pages/match/signList/index?id=${encodeURIComponent(matchId)}`,
+    })
   },
 
   onTapOrganizer() {
     const openId = toText(this.data.organizer && this.data.organizer.openId)
     if (!openId) return
     wx.navigateTo({ url: `/pages/user/person/index?openId=${encodeURIComponent(openId)}` })
+  },
+
+  onJoinMatch() {
+    if (this.data.joining) return
+    const matchId = toText(this.data.matchId)
+    const match = this.data.match || {}
+    if (Number(match.statusCode) !== 1) {
+      wx.showToast({ title: '当前不可报名', icon: 'none' })
+      return
+    }
+    if (this.data.hasJoined) {
+      wx.showToast({ title: '你已报名该比赛', icon: 'none' })
+      return
+    }
+    const joined = Number(match.joined || 0)
+    const capacity = Number(match.capacity || 0)
+    if (capacity > 0 && joined >= capacity) {
+      wx.showToast({ title: '报名人数已满', icon: 'none' })
+      return
+    }
+    const app = getApp()
+    const openid = pickOpenId()
+    const userInfo = (app && app.globalData && app.globalData.userInfo) || {}
+    if (!openid) {
+      wx.showToast({ title: '请先登录后再报名', icon: 'none' })
+      return
+    }
+    if (!isProfileCompleted(userInfo)) {
+      const shareQuery = this.data.isShareMode ? '&mode=share' : ''
+      const returnUrl = encodeURIComponent(
+        `/pages/match/details/index?id=${encodeURIComponent(matchId)}${shareQuery}`,
+      )
+      wx.showModal({
+        title: '提示',
+        content: '请先完善昵称和头像信息，再报名比赛。',
+        confirmText: '去完善',
+        success: (res) => {
+          if (!res.confirm) return
+          wx.navigateTo({
+            url: `/pages/user/info/index?from=matchShareJoin&matchId=${encodeURIComponent(matchId)}&returnUrl=${returnUrl}`,
+          })
+        },
+      })
+      return
+    }
+    const payload = {
+      matchId: Number(matchId) || matchId,
+      userId: openid,
+      userName: toText(userInfo.nickName || userInfo.name, '未命名用户'),
+      userAvatar: toText(userInfo.avatar),
+      status: 1,
+    }
+    this.setData({ joining: true })
+    wx.showLoading({ title: '报名中...', mask: true })
+    MATCH_JOIN(payload)
+      .then(({ message }) => {
+        wx.showToast({
+          title: toText(message, '报名成功'),
+          icon: 'success',
+        })
+        return this.fetchMatchDetail(matchId)
+      })
+      .catch(() => {
+        wx.showToast({ title: '报名失败，请稍后重试', icon: 'none' })
+      })
+      .finally(() => {
+        wx.hideLoading()
+        this.setData({ joining: false })
+      })
   },
 
   onInviteClub() {
@@ -638,7 +759,7 @@ Page({
     wx.showLoading({ title: '提交中...', mask: true })
     MATCH_INVITE_CLUB_MEMBERS({ matchId, clubId, openIds })
       .then(() => {
-        wx.showToast({ title: '邀请已提交', icon: 'success' })
+        wx.showToast({ title: '邀请成功', icon: 'success' })
         if (matchId) return this.fetchMatchDetail(matchId)
         return null
       })

@@ -8,7 +8,7 @@ class MatchParticipantController {
             try {
                 const existed = await MatchParticipantModel.detailByMatchUser(req.matchId, req.userId);
                 if (existed) {
-                    ctx.body = R.set(existed, 200, "已存在");
+                    ctx.body = R.set(existed, 200, "已报名");
                     return;
                 }
                 const ret = await MatchParticipantModel.create(req);

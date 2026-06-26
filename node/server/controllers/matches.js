@@ -117,6 +117,31 @@ class MatchController {
             ctx.body = R.error(416);
         }
     }
+
+    /** body: { clubId, matchId, openIds: string[] } 邀请俱乐部成员加入比赛 */
+    static async inviteClubMembers(ctx) {
+        const req = ctx.request.body || {};
+        const clubId = req.clubId;
+        const matchId = req.matchId;
+        const openIds = req.openIds;
+
+        const hasClub = clubId != null && String(clubId).trim() !== '';
+        const hasMatch = matchId != null && String(matchId).trim() !== '';
+        const hasOpenIds = Array.isArray(openIds) && openIds.length > 0;
+
+        if (!hasClub || !hasMatch || !hasOpenIds) {
+            ctx.body = R.error(416);
+            return;
+        }
+
+        try {
+            const result = await MatchModel.inviteClubMembers(clubId, matchId, openIds);
+            ctx.body = R.set(result, 200, "邀请成功");
+        } catch (err) {
+            const tip = err && err.message ? err.message : String(err);
+            ctx.body = R.error(412, tip);
+        }
+    }
 }
 
 module.exports = MatchController;

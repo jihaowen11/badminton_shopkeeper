@@ -75,11 +75,12 @@ class MatchParticipantModel {
     }
 
     /** 批量按比赛 id 拉取成员，按比赛 id、记录 id 升序 */
-    static async listByMatchIds(matchIds) {
+    static async listByMatchIds(matchIds, options = {}) {
         if (!matchIds || matchIds.length === 0) return [];
         return await matchParticipants.findAll({
             where: { matchId: { [Op.in]: matchIds } },
             order: [['matchId', 'ASC'], ['id', 'ASC']],
+            transaction: options.transaction,
         });
     }
 

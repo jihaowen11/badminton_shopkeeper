@@ -1,4 +1,4 @@
-const { DataTypes } = require('sequelize');
+const { DataTypes, Op } = require('sequelize');
 const db = require('../config/db');
 const Sequelize = db.sequelize;
 const clubMembers = require('../schema/clubMembers')(Sequelize, DataTypes);
@@ -65,6 +65,25 @@ class ClubMemberModel {
             where,
             order: [['id', 'DESC']]
         })
+    }
+
+    /** 某俱乐部下指定 openId 成员，返回 Map<openId, plainObject> */
+    static async mapByClubAndOpenIds(clubId, openIds, options = {}) {
+        const ids = [...new Set((openIds || []).map((id) => String(id).trim()).filter(Boolean))];
+        if (ids.length === 0) return new Map();
+        const rows = await clubMembers.findAll({
+            where: {
+                clubId,
+                userId: { [Op.in]: ids },
+            },
+            transaction: options.transaction,
+        });
+        const map = new Map();
+        for (const row of rows) {
+            const plain = row.get({ plain: true });
+            if (plain.userId != null) map.set(String(plain.userId), plain);
+        }
+        return map;
     }
 
     static async delete(id) {
