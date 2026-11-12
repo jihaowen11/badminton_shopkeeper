@@ -269,3 +269,39 @@ page {
   font-weight: 700;
   color: rgba(18, 22, 26, 0.48);
 }
+/* ===== 排期模式 ===== */
+.chip--round {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+.chip--ghost {
+  background: rgba(255, 255, 255, 0.1);
+  font-weight: 700;
+}
+
+.side-title--multi {
+  max-width: 100%;
+  padding: 0 8rpx;
+  font-size: 24rpx;
+  line-height: 1.35;
+  text-align: center;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.loading-card {
+  margin: 40rpx 28rpx;
+  padding: 60rpx 0;
+  text-align: center;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.op-btn-end.is-disabled {
+  opacity: 0.6;
+}

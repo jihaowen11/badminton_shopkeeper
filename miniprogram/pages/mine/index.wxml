@@ -1,3 +1,4 @@
+<loading-bar />
 <view class="mine {{enter ? 'is-enter' : ''}}">
   <view class="mine-hero" aria-hidden="true">
     <view class="mine-hero-ring"></view>
@@ -36,7 +37,7 @@
         <view class="stat2-icon stat2-icon-green">
           <van-icon name="todo-list" size="44rpx" class="stat-icon" color="#0a8f3e" />
         </view>
-        <view class="stat2-value">128</view>
+        <view class="stat2-value">{{stats.playedText}}</view>
         <view class="stat2-label">总场次</view>
       </view>
 
@@ -44,7 +45,7 @@
         <view class="stat2-icon stat2-icon-orange">
           <van-icon name="cluster" size="44rpx" class="stat-icon" color="#ff9800" />
         </view>
-        <view class="stat2-value">89</view>
+        <view class="stat2-value">{{stats.winText}}</view>
         <view class="stat2-label">胜场</view>
       </view>
 
@@ -52,7 +53,7 @@
         <view class="stat2-icon stat2-icon-blue">
           <van-icon name="award" size="44rpx" class="stat-icon" color="#2f73ff" />
         </view>
-        <view class="stat2-value">69.5%</view>
+        <view class="stat2-value">{{stats.winRateText}}</view>
         <view class="stat2-label">胜率</view>
       </view>
 
@@ -60,7 +61,7 @@
         <view class="stat2-icon stat2-icon-red">
           <van-icon name="fire" size="44rpx" class="stat-icon" color="#ff4d5b" />
         </view>
-        <view class="stat2-value">7</view>
+        <view class="stat2-value">{{stats.streakText}}</view>
         <view class="stat2-label">连胜</view>
       </view>
     </view>
@@ -118,10 +119,23 @@
         </view>
       </view>
 
+      <view wx:if="{{matchLoading && matches.length === 0}}" class="match-empty">
+        <view class="match-empty-desc">战绩加载中...</view>
+      </view>
+
+      <view wx:elif="{{matches.length === 0}}" class="match-empty">
+        <view class="match-empty-title">还没有比赛记录</view>
+        <view class="match-empty-desc">参加一场八人转，打完并在记分板保存比分后，这里会自动出现战绩</view>
+        <button class="match-empty-btn" bindtap="onGoMatchList">去看看比赛</button>
+      </view>
+
       <view
         wx:for="{{matches}}"
         wx:key="id"
         class="match-card {{item.result === 'win' ? 'is-win' : 'is-loss'}}"
+        data-match-id="{{item.matchId}}"
+        bindtap="onGoMatchDetail"
+        hover-class="match-card-hover"
       >
         <view class="match-stripe"></view>
         <view class="match-head">

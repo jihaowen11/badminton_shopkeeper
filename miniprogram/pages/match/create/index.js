@@ -1,5 +1,6 @@
 // pages/match/create/index.js
 const { CLUB_MY_LIST, CREATE_MATCH } = require('../../../request/api')
+const { whenLoginReady, pickOpenId } = require('../../../utils/auth')
 
 function pad2(n) {
   return String(n).padStart(2, '0')
@@ -44,22 +45,6 @@ function buildRoundOptions(people) {
   return rounds
     .filter((v) => Number.isFinite(v) && v > 0)
     .map((v) => ({ value: v, label: `${v}场` }))
-}
-
-function pickOpenId() {
-  try {
-    const app = getApp()
-    const gd = (app && app.globalData) || {}
-    return (
-      (gd.openid && String(gd.openid).trim()) ||
-      (gd.userInfo &&
-        (gd.userInfo.openId || gd.userInfo.openid || gd.userInfo.openID) &&
-        String(gd.userInfo.openId || gd.userInfo.openid || gd.userInfo.openID).trim()) ||
-      ''
-    )
-  } catch (e) {
-    return ''
-  }
 }
 
 function mapMyClubOptions(rawList) {
@@ -245,15 +230,9 @@ Page({
     this.setData({ venueText: t, venueInputVisible: false })
   },
 
-  fetchMyClubs(retryCount = 0) {
-    const openId = pickOpenId()
-    if (!openId) {
-      if (retryCount < 5) {
-        setTimeout(() => this.fetchMyClubs(retryCount + 1), 300)
-      }
-      return Promise.resolve([])
-    }
-    return CLUB_MY_LIST({ openId })
+  fetchMyClubs() {
+    return whenLoginReady()
+      .then(() => CLUB_MY_LIST({ openId: pickOpenId() }))
       .then((list) => {
         const clubOptions = mapMyClubOptions(list)
         const clubPickerNames = ['不关联俱乐部'].concat(clubOptions.map((c) => c.name))
@@ -345,7 +324,12 @@ Page({
     wx.showLoading({ title: '创建中...', mask: true })
     CREATE_MATCH(payload)
       .then((obj) => {
-        const id = obj && obj.id != null ? String(obj.id) : 'm3'
+        // 后端没回 id 说明这次创建结果不可用，不能编一个 id 跳到不存在的比赛
+        const id = obj && obj.id != null ? String(obj.id) : ''
+        if (!id) {
+          wx.showToast({ title: '创建结果异常，请到列表查看', icon: 'none' })
+          return
+        }
         wx.showToast({ title: '创建成功', icon: 'success' })
         setTimeout(() => {
           wx.navigateTo({

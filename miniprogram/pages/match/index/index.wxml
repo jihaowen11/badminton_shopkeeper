@@ -1,3 +1,4 @@
+<loading-bar />
 <!--pages/match/index/index.wxml-->
 <view class="page home">
   <back

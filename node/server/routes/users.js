@@ -2,6 +2,7 @@ const router = require('koa-router')()
 const multer = require('multer')
 const R = require('../utils/responseBeautifier')
 const UserController = require('../controllers/users')
+const UserStatsController = require('../controllers/userStats')
 
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -38,5 +39,8 @@ router.post('/findUserByOpenid', UserController.findUserByOpenid)
 
 //上传头像（multipart：openId 字段 + file 文件）
 router.post('/uploadAvatar', uploadAvatarMulter, UserController.uploadAvatar)
+
+//我的战绩与最近比赛（openId 不传即看自己）
+router.post('/stats', UserStatsController.mine)
 
 module.exports = router

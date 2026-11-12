@@ -375,3 +375,33 @@
   align-items: center;
   justify-content: center;
 }
+/* ===== 今日贴士（动态内容） ===== */
+.tip-meta{
+  flex: 1;
+  min-width: 0;
+}
+
+.tip-head{
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  /* 避开右上角的装饰圆环 */
+  padding-right: 58rpx;
+}
+
+.tip-tag{
+  flex: 0 0 auto;
+  padding: 0 14rpx;
+  height: 32rpx;
+  line-height: 32rpx;
+  border-radius: 8rpx;
+  font-size: 20rpx;
+  font-weight: 700;
+  color: var(--green);
+  background: rgba(10,143,62,0.10);
+}
+
+.tip-text--loading{
+  color: rgba(18,22,26,0.40);
+  font-weight: 500;
+}

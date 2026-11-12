@@ -1,8 +1,11 @@
 // pages/cost/index.js
 
 const { BallSim, sumShuttleQty } = require('./balls.js')
+const { MATCH_ROUNDS_LIST, MATCH_DES } = require('../../request/api')
+const { whenLoginReady } = require('../../utils/auth')
 
 const STORAGE_KEY = 'cost_bill_draft'
+const DEFAULT_AVATAR = '/images/noheader.jpg'
 
 function uid() {
   return `l${Date.now()}_${Math.floor(Math.random() * 1000)}`
@@ -18,6 +21,78 @@ function fmtMoney(n) {
   if (Number.isInteger(v)) return String(v)
   const s = v.toFixed(2)
   return s.replace(/\.?0+$/, '')
+}
+
+/** 头像路径转成可访问地址（服务端存的是 /avatar/xxx.jpg 这种相对路径） */
+function toAvatarUrl(raw) {
+  const path = raw == null ? '' : String(raw).trim()
+  if (!path) return DEFAULT_AVATAR
+  try {
+    const app = getApp()
+    if (app && app.fun && typeof app.fun.joinStaticUrl === 'function') {
+      return app.fun.joinStaticUrl(path)
+    }
+  } catch (e) {}
+  return path || DEFAULT_AVATAR
+}
+
+/**
+ * 结算建议：每人"已垫付 - 应摊"得到净额，再让欠最多的给垫最多的转账。
+ * 用贪心配对而不是两两平摊，能把转账笔数压到最少。
+ */
+function buildSettlements(participants, lineItems, amountOf) {
+  const n = Array.isArray(participants) ? participants.length : 0
+  if (n < 2) return []
+
+  const paid = {}
+  participants.forEach((p) => {
+    paid[p.id] = 0
+  })
+
+  let total = 0
+  ;(Array.isArray(lineItems) ? lineItems : []).forEach((it) => {
+    const amount = amountOf(it)
+    total += amount
+    if (paid[it.payerId] == null) paid[it.payerId] = 0
+    paid[it.payerId] += amount
+  })
+  if (total <= 0) return []
+
+  const avg = total / n
+  const creditors = []
+  const debtors = []
+
+  participants.forEach((p) => {
+    const net = Math.round(((paid[p.id] || 0) - avg) * 100) / 100
+    const row = { name: p.name || '球友', net }
+    if (net > 0.009) creditors.push(row)
+    else if (net < -0.009) debtors.push(row)
+  })
+
+  creditors.sort((a, b) => b.net - a.net)
+  debtors.sort((a, b) => a.net - b.net)
+
+  const result = []
+  let i = 0
+  let j = 0
+  let guard = 0
+  while (i < debtors.length && j < creditors.length && guard < 200) {
+    guard += 1
+    const pay = Math.min(-debtors[i].net, creditors[j].net)
+    if (pay > 0.009) {
+      result.push({
+        key: `${i}-${j}`,
+        from: debtors[i].name,
+        to: creditors[j].name,
+        amountText: fmtMoney(pay),
+      })
+    }
+    debtors[i].net = Math.round((debtors[i].net + pay) * 100) / 100
+    creditors[j].net = Math.round((creditors[j].net - pay) * 100) / 100
+    if (debtors[i].net > -0.009) i += 1
+    if (creditors[j].net < 0.009) j += 1
+  }
+  return result
 }
 
 function normalizeLineItems(lines, firstPid) {
@@ -45,44 +120,102 @@ Page({
     totalText: '0',
     avgText: '0',
 
-    participants: [
-      { id: 'p1', name: '球友A', avatar: '/images/noheader.jpg' },
-      { id: 'p2', name: '球友B', avatar: '/images/noheader.jpg' },
-      { id: 'p3', name: '球友C', avatar: '/images/noheader.jpg' },
-      { id: 'p4', name: '球友D', avatar: '/images/noheader.jpg' },
-    ],
+    // 从比赛进入时带 matchId，人员来自报名名单
+    matchId: '',
+    fromMatch: false,
+    matchTitle: '',
+    loading: false,
+
+    // 结算建议：[{ from, to, amountText }]，全部为 0 时为空数组
+    settlements: [],
+
+    participants: [],
 
     lineItems: [
       {
         id: 'line_court_default',
         type: 'court',
         label: '场地费',
-        courtAmount: '200',
+        courtAmount: '',
         unitPrice: '',
         qty: 1,
-        payerId: 'p1',
-        lineTotal: '200',
-        payerAvatar: '/images/noheader.jpg',
+        payerId: 'me',
+        lineTotal: '0',
+        payerAvatar: DEFAULT_AVATAR,
       },
       {
         id: 'line_shuttle_default',
         type: 'shuttle',
         label: '球费',
         courtAmount: '',
-        unitPrice: '12',
-        qty: 5,
-        payerId: 'p1',
-        lineTotal: '60',
-        payerAvatar: '/images/noheader.jpg',
+        unitPrice: '',
+        qty: 1,
+        payerId: 'me',
+        lineTotal: '0',
+        payerAvatar: DEFAULT_AVATAR,
       },
     ],
   },
 
-  onLoad() {
+  onLoad(options) {
     this._ballSim = new BallSim()
     this._heroW = 0
     this._heroH = 0
-    this.loadDraft()
+    const matchId = options && options.matchId ? String(options.matchId) : ''
+    if (matchId) {
+      this.setData({ matchId, fromMatch: true })
+      this.loadMatchParticipants(matchId)
+    } else {
+      this.loadDraft()
+    }
+  },
+
+  /** 从比赛报名名单取人：这是最准确的一份"谁在场" */
+  loadMatchParticipants(matchId) {
+    this.setData({ loading: true })
+    return whenLoginReady()
+      .then(() => Promise.all([
+        MATCH_ROUNDS_LIST({ matchId }).catch(() => null),
+        MATCH_DES({ id: matchId }).catch(() => null),
+      ]))
+      .then(([schedule, detail]) => {
+        const players = (schedule && Array.isArray(schedule.players)) ? schedule.players : []
+        const participants = players
+          .map((p, index) => ({
+            id: p.openId || `guest_${index}`,
+            name: (p.name != null && String(p.name).trim()) || `球友${index + 1}`,
+            avatar: toAvatarUrl(p.avatar),
+          }))
+          .filter((p) => !!p.id)
+
+        if (participants.length === 0) {
+          // 没报名数据（比如比赛还没人报名）就退回本地草稿，别让页面空着
+          this.setData({ fromMatch: false })
+          this.loadDraft()
+          return
+        }
+
+        const firstPid = participants[0].id
+        const title = detail && (detail.name || detail.title) ? String(detail.name || detail.title) : ''
+        this.setData({
+          participants,
+          matchTitle: title,
+          lineItems: this.data.lineItems.map((it) => ({ ...it, payerId: firstPid, payerAvatar: participants[0].avatar })),
+        })
+        this.recalcAll()
+      })
+      .catch(() => {
+        this.setData({ fromMatch: false })
+        this.loadDraft()
+      })
+      .finally(() => {
+        this.setData({ loading: false })
+      })
+  },
+
+  /** 草稿的存储键：按比赛分开存，避免把上一场的账单带进来 */
+  storageKey() {
+    return this.data.matchId ? `cost_bill_draft_m${this.data.matchId}` : STORAGE_KEY
   },
 
   onReady() {
@@ -188,9 +321,23 @@ Page({
       })
   },
 
+  /** 没有草稿时的初始人员：只有"我"一个，其他用「+ 人员」补 */
+  defaultParticipants() {
+    let name = '我'
+    let avatar = DEFAULT_AVATAR
+    try {
+      const app = getApp()
+      const info = (app && app.globalData && app.globalData.userInfo) || {}
+      const nick = info.nickName != null ? String(info.nickName).trim() : ''
+      if (nick) name = nick
+      if (info.avatar) avatar = toAvatarUrl(info.avatar)
+    } catch (e) {}
+    return [{ id: 'me', name, avatar }]
+  },
+
   loadDraft() {
     try {
-      const raw = wx.getStorageSync(STORAGE_KEY)
+      const raw = wx.getStorageSync(this.storageKey())
       if (raw && Array.isArray(raw.participants) && raw.participants.length > 0) {
         const firstPid = raw.participants[0].id
         const normalized = normalizeLineItems(raw.lineItems, firstPid)
@@ -202,7 +349,8 @@ Page({
         return
       }
     } catch (e) {}
-    this.recalcAll()
+    const participants = this.data.participants.length > 0 ? this.data.participants : this.defaultParticipants()
+    this.setData({ participants }, () => this.recalcAll())
   },
 
   onPageScroll(e) {
@@ -248,12 +396,14 @@ Page({
 
     const n = this.data.participants.length || 1
     const avgText = fmtMoney(total / n)
+    const settlements = buildSettlements(this.data.participants, lineItems, (it) => this.lineAmount(it))
 
     this.setData(
       {
         lineItems,
         totalText: fmtMoney(total),
         avgText,
+        settlements,
       },
       () => this.syncBallCountAndLayout(),
     )
@@ -402,7 +552,7 @@ Page({
 
   onSave() {
     try {
-      wx.setStorageSync(STORAGE_KEY, this.buildPersistPayload())
+      wx.setStorageSync(this.storageKey(), this.buildPersistPayload())
       wx.showToast({ title: '已保存', icon: 'success' })
     } catch (e) {
       wx.showToast({ title: '保存失败', icon: 'none' })

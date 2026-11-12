@@ -1,3 +1,4 @@
+<loading-bar />
 <!--pages/club/index/index.wxml-->
 <view class="page home">
   <back

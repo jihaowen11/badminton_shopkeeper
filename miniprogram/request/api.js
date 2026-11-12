@@ -49,6 +49,28 @@ const MATCH_JOIN = (data) => postRequest(`/matchParticipants/create`, data, { wi
 /** 取消报名（删除参赛记录） */
 const MATCH_PARTICIPANT_DELETE = (data) => postRequest(`/matchParticipants/delete`, data)
 
+//轮转排期（八人转）
+/** 生成排期：body { matchId, rounds?, force? } */
+const MATCH_ROUNDS_GENERATE = (data) => postRequest(`/matchRounds/generate`, data, { withMessage: true })
+/** 查询排期 + 排名：body { matchId } */
+const MATCH_ROUNDS_LIST = (data) => postRequest(`/matchRounds/list`, data)
+/** 录入某场比分：body { roundId, team1Score, team2Score } */
+const MATCH_ROUNDS_SUBMIT_SCORE = (data) => postRequest(`/matchRounds/submitScore`, data, { withMessage: true })
+/** 撤销某场比分：body { roundId } */
+const MATCH_ROUNDS_CLEAR_SCORE = (data) => postRequest(`/matchRounds/clearScore`, data, { withMessage: true })
+/** 清空整场排期：body { matchId } */
+const MATCH_ROUNDS_RESET = (data) => postRequest(`/matchRounds/reset`, data, { withMessage: true })
+
+//统计
+/** 我的/某人的战绩与最近比赛：body { openId?, limit? } */
+const USER_STATS = (data) => postRequest(`/users/stats`, data)
+/** 首页平台总量（公开） */
+const STATS_OVERVIEW = (data) => postRequest(`/stats/overview`, data)
+
+//贴士
+/** 今日贴士（公开）：返回 { id, title, category, content, date, seq, total } */
+const TIP_DAILY = (data) => postRequest(`/tips/daily`, data || {})
+
 module.exports = {
   GET_OPENID,
   UPDATA_USER,
@@ -71,4 +93,12 @@ module.exports = {
   MATCH_INVITE_CLUB_MEMBERS,
   MATCH_JOIN,
   MATCH_PARTICIPANT_DELETE,
+  MATCH_ROUNDS_GENERATE,
+  MATCH_ROUNDS_LIST,
+  MATCH_ROUNDS_SUBMIT_SCORE,
+  MATCH_ROUNDS_CLEAR_SCORE,
+  MATCH_ROUNDS_RESET,
+  USER_STATS,
+  STATS_OVERVIEW,
+  TIP_DAILY,
 }

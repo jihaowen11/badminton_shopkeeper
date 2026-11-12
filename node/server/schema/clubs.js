@@ -52,5 +52,8 @@ module.exports = function (sequelize, DataTypes) {
         }
     }, {
         freezeTableName: true,
+        indexes: [
+            { name: 'idx_clubs_creator', fields: ['creator'] }
+        ]
     })
 }

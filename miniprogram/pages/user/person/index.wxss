@@ -422,3 +422,22 @@ page{
   font-weight: 800;
   color: rgba(18,22,26,0.55);
 }
+/* ===== 最近比赛空态 ===== */
+.match-empty {
+  padding: 48rpx 32rpx;
+  border-radius: 24rpx;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 0 8rpx 22rpx rgba(0, 0, 0, 0.06);
+}
+
+.match-empty-desc {
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: rgba(18, 22, 26, 0.45);
+}
+
+.match-card-hover {
+  transform: scale(0.985);
+  opacity: 0.92;
+}

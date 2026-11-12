@@ -4,6 +4,8 @@
  * Module dependencies.
  */
 
+// 先加载 .env，保证后续模块读到的 process.env 是最新的
+var env = require('../config/env');
 var app = require('../app');
 var debug = require('debug')('demo:server');
 var http = require('http');
@@ -12,7 +14,7 @@ var http = require('http');
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || '3000');
+var port = normalizePort(env.get('PORT', '3000'));
 // app.set('port', port);
 
 /**
@@ -87,4 +89,9 @@ function onListening() {
     ? 'pipe ' + addr
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
+
+  // 表结构建好之后再补二级索引；异步执行，失败只记日志，不阻塞启动
+  require('../config/indexes').ensureIndexes().catch(function (err) {
+    console.error('[index] 初始化异常：', err && err.message ? err.message : err);
+  });
 }

@@ -18,8 +18,22 @@ function pickCreatorOpenId(data) {
     return '';
 }
 
+/** 分页参数：默认第 1 页、每页 20 条，最多 100 条 */
+function resolvePaging(data = {}) {
+    const page = Math.max(1, parseInt(data.page, 10) || 1);
+    const pageSizeRaw = parseInt(data.pageSize != null ? data.pageSize : data.limit, 10);
+    const pageSize = Math.min(
+        100,
+        Math.max(1, Number.isFinite(pageSizeRaw) && pageSizeRaw > 0 ? pageSizeRaw : 20)
+    );
+    return { page, pageSize, offset: (page - 1) * pageSize };
+}
+
 class MatchModel {
     static async create(data) {
+        // 创建者同时是比赛的默认参与者，两者用同一个 openId，
+        // 避免出现 createdBy 为空、创建者反而没有管理权限的情况
+        const creatorOpenId = pickCreatorOpenId(data);
         const t = await Sequelize.transaction();
         try {
             const match = await matches.create({
@@ -36,34 +50,32 @@ class MatchModel {
                 endTime: data.endTime,
                 address: data.address,
                 views: data.views,
-                createdBy: data.createdBy,
+                createdBy: creatorOpenId || null,
                 playerCount: data.playerCount,
                 sessionCount: data.sessionCount,
                 remark: data.remark
             }, { transaction: t });
 
-            const openId = pickCreatorOpenId(data);
+            const openId = creatorOpenId;
             if (openId) {
-                const existed = await MatchParticipantModel.detailByMatchUser(match.id, openId, { transaction: t });
-                if (!existed) {
-                    let userName = null;
-                    let userAvatar = null;
-                    const u = await UserModel.detailByOpenId(openId);
-                    if (u) {
-                        const plain = u.get({ plain: true });
-                        userName = plain.nickName || plain.name || null;
-                        userAvatar = plain.avatar || null;
-                    }
-                    await MatchParticipantModel.create({
-                        matchId: match.id,
-                        userId: openId,
-                        userName,
-                        userAvatar,
-                        number: 1,
-                        teamId: null,
-                        status: 1
-                    }, { transaction: t });
+                // 比赛刚创建，id 必定是新的，不可能已有报名记录，无需再查一次重
+                let userName = null;
+                let userAvatar = null;
+                const u = await UserModel.detailByOpenId(openId);
+                if (u) {
+                    const plain = u.get({ plain: true });
+                    userName = plain.nickName || plain.name || null;
+                    userAvatar = plain.avatar || null;
                 }
+                await MatchParticipantModel.create({
+                    matchId: match.id,
+                    userId: openId,
+                    userName,
+                    userAvatar,
+                    number: 1,
+                    teamId: null,
+                    status: 1
+                }, { transaction: t });
             }
 
             await t.commit();
@@ -163,38 +175,19 @@ class MatchModel {
         }
 
         const order = [['createdAt', 'DESC']];
+        const { page, pageSize, offset } = resolvePaging(data);
 
-        if (!openIdRaw) {
-            const rows = await matches.findAll({
-                where: baseWhere,
-                order,
-            });
-            const clubIds = [...new Set(
-                rows.map((r) => r.get({ plain: true }).clubId).filter((cid) => cid != null && cid !== '')
-            )];
-            const clubMap = await ClubModel.mapPlainByIds(clubIds);
-            return rows.map((r) => {
-                const match = r.get({ plain: true });
-                const cid = match.clubId != null ? Number(match.clubId) : NaN;
-                const club = Number.isFinite(cid) ? (clubMap.get(cid) || null) : null;
-                return { ...match, club };
-            });
+        // 不传 openId 时就是公开列表：不加身份过滤，但同样分页，
+        // 避免数据涨起来之后一次把整张表拉回来
+        let where = baseWhere;
+        if (openIdRaw) {
+            const participatedIds = await MatchParticipantModel.matchIdsByUserOpenId(openIdRaw);
+            const orConds = [{ createdBy: openIdRaw }];
+            if (participatedIds.length > 0) {
+                orConds.push({ id: { [Op.in]: participatedIds } });
+            }
+            where = { ...baseWhere, [Op.or]: orConds };
         }
-
-        const participatedIds = await MatchParticipantModel.matchIdsByUserOpenId(openIdRaw);
-        const orConds = [{ createdBy: openIdRaw }];
-        if (participatedIds.length > 0) {
-            orConds.push({ id: { [Op.in]: participatedIds } });
-        }
-        const where = { ...baseWhere, [Op.or]: orConds };
-
-        const page = Math.max(1, parseInt(data.page, 10) || 1);
-        const pageSizeRaw = parseInt(data.pageSize ?? data.limit, 10);
-        const pageSize = Math.min(
-            100,
-            Math.max(1, Number.isFinite(pageSizeRaw) && pageSizeRaw > 0 ? pageSizeRaw : 20)
-        );
-        const offset = (page - 1) * pageSize;
 
         const total = await matches.count({ where });
         const matchRows = await matches.findAll({
@@ -203,8 +196,10 @@ class MatchModel {
             limit: pageSize,
             offset,
         });
+        const plains = matchRows.map((row) => row.get({ plain: true }));
+        if (plains.length === 0) return { total, list: [], page, pageSize };
 
-        const matchIds = matchRows.map((m) => m.id);
+        const matchIds = plains.map((m) => m.id);
         const allParts = await MatchParticipantModel.listByMatchIds(matchIds);
         const partsByMatch = new Map();
         for (const row of allParts) {
@@ -213,21 +208,22 @@ class MatchModel {
             partsByMatch.get(mid).push(row.get({ plain: true }));
         }
 
-        const organizerIds = matchRows.map((m) => m.createdBy).filter((x) => x != null && String(x).trim() !== '');
+        const organizerIds = plains
+            .map((m) => m.createdBy)
+            .filter((x) => x != null && String(x).trim() !== '');
         const participantIds = allParts.map((p) => p.userId).filter(Boolean);
         const allProfileIds = [...new Set([...organizerIds, ...participantIds].map((x) => String(x).trim()))];
         const userMap = await UserModel.mapProfileByOpenIds(allProfileIds);
 
         const clubIds = [...new Set(
-            matchRows.map((m) => m.get({ plain: true }).clubId).filter((cid) => cid != null && cid !== '')
+            plains.map((m) => m.clubId).filter((cid) => cid != null && cid !== '')
         )];
         const clubMap = await ClubModel.mapPlainByIds(clubIds);
 
-        const list = matchRows.map((m) => {
-            const match = m.get({ plain: true });
+        const list = plains.map((match) => {
             const oby = match.createdBy != null ? String(match.createdBy).trim() : '';
             const organizer = oby ? userMap.get(oby) || null : null;
-            const rawParts = partsByMatch.get(m.id) || [];
+            const rawParts = partsByMatch.get(match.id) || [];
             const participants = rawParts.map((p) => {
                 const uid = p.userId != null ? String(p.userId).trim() : '';
                 const user = uid ? userMap.get(uid) || null : null;
@@ -241,11 +237,15 @@ class MatchModel {
         return { total, list, page, pageSize };
     }
 
-    /** 浏览量 +1，返回更新后的比赛行 */
+    /** 浏览量 +1，返回更新后的比赛行；无该 id 返回 null */
     static async incrementViews(id) {
-        const exists = await matches.findOne({ where: { id }, attributes: ['id'] });
-        if (!exists) return null;
-        await matches.increment('views', { by: 1, where: { id } });
+        // 一条 UPDATE 顶掉原来的「查存在 → 自增 → 再查」三次往返；
+        // views + 1 必然改变值，所以 affectedRows 就是命中数
+        const [affected] = await matches.update(
+            { views: Sequelize.literal('views + 1') },
+            { where: { id } }
+        );
+        if (!affected) return null;
         return await matches.findOne({ where: { id } });
     }
 
@@ -261,12 +261,26 @@ class MatchModel {
         return await matches.findOne({ where: { id } });
     }
 
+    /** 删除比赛：连带清掉报名记录与排期，避免留下孤儿数据 */
     static async delete(id) {
-        return await matches.destroy({
-            where: {
-                id
-            }
-        })
+        const t = await Sequelize.transaction();
+        try {
+            await MatchParticipantModel.deleteByMatchId(id, { transaction: t });
+            // 延迟 require：避免模块加载顺序上出现循环依赖
+            const MatchRoundModel = require('./matchRounds');
+            await MatchRoundModel.deleteByMatchId(id, { transaction: t });
+            const deleted = await matches.destroy({
+                where: {
+                    id
+                },
+                transaction: t
+            });
+            await t.commit();
+            return deleted;
+        } catch (e) {
+            await t.rollback();
+            throw e;
+        }
     }
 
     /**
@@ -293,6 +307,9 @@ class MatchModel {
         try {
             const clubMemberMap = await ClubMemberModel.mapByClubAndOpenIds(clubId, ids, { transaction: t });
             const existingParts = await MatchParticipantModel.listByMatchIds([matchId], { transaction: t });
+            const joinedSet = new Set(
+                existingParts.map((row) => String(row.userId).trim()).filter(Boolean)
+            );
             let maxNumber = 0;
             for (const row of existingParts) {
                 const n = Number(row.number);
@@ -303,8 +320,8 @@ class MatchModel {
             const skipped = [];
 
             for (const openId of ids) {
-                const existed = await MatchParticipantModel.detailByMatchUser(matchId, openId, { transaction: t });
-                if (existed) {
+                // 已报名的人直接在内存里判断，不再逐条查库
+                if (joinedSet.has(openId)) {
                     skipped.push({ openId, reason: '已报名' });
                     continue;
                 }

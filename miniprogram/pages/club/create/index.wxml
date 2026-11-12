@@ -1,3 +1,4 @@
+<loading-bar />
 <!--pages/club/create/index.wxml-->
 <view class="page">
   <back  scrollTop="{{membersScrollTop}}"/>

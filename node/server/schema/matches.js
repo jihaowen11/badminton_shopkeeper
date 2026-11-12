@@ -122,5 +122,10 @@ module.exports = function (sequelize, DataTypes) {
         }
     }, {
         freezeTableName: true,
+        indexes: [
+            { name: 'idx_matches_created_by', fields: ['created_by'] },
+            { name: 'idx_matches_club_status', fields: ['club_id', 'status'] },
+            { name: 'idx_matches_start_time', fields: ['start_time'] }
+        ]
     })
 }

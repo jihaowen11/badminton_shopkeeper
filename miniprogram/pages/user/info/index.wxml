@@ -1,3 +1,4 @@
+<loading-bar />
 <!--pages/user/info/index.wxml-->
 <view class="page">
   <back  scrollTop="{{pageScrollTop}}"/>

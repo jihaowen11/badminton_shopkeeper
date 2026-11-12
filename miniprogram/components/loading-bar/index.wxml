@@ -1,0 +1,3 @@
+<view class="loading-bar {{visible ? 'loading-bar--visible' : ''}}">
+  <view class="loading-bar__inner"></view>
+</view>

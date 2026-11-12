@@ -3,8 +3,13 @@ node_modules
 dist.zip
 
 # local env files
+.env
 .env.local
 .env.*.local
+!.env.example
+
+# 本地开发工具的工作区数据（会话、记忆、临时脚本等，不参与版本管理）
+.workbuddy/
 
 # Log files
 npm-debug.log*

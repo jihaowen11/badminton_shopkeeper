@@ -1,0 +1,39 @@
+/* 顶部细进度条：fixed 定位、不占布局、不拦截点击 */
+.loading-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4rpx;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.loading-bar--visible {
+  opacity: 1;
+}
+
+.loading-bar__inner {
+  width: 35%;
+  height: 100%;
+  border-radius: 4rpx;
+  background: linear-gradient(
+    90deg,
+    rgba(10, 143, 62, 0) 0%,
+    rgba(10, 143, 62, 0.95) 50%,
+    rgba(10, 143, 62, 0) 100%
+  );
+  animation: loading-bar-slide 1s ease-in-out infinite;
+}
+
+@keyframes loading-bar-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}

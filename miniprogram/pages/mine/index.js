@@ -1,5 +1,7 @@
 const DEFAULT_AVATAR = '/images/noheader.jpg'
-const { CLUB_MY_LIST } = require('../../request/api')
+const { CLUB_MY_LIST, USER_STATS } = require('../../request/api')
+const { whenLoginReady, pickOpenId } = require('../../utils/auth')
+const { mapRecentMatches, formatStats } = require('../../utils/matchView')
 
 function formatJoinDate(createdAt) {
   if (createdAt == null || createdAt === '') return ''
@@ -81,22 +83,6 @@ function toRoleText(role, isCreator) {
   return '成员'
 }
 
-function pickOpenId() {
-  try {
-    const app = getApp()
-    const gd = (app && app.globalData) || {}
-    return (
-      (gd.openid && String(gd.openid).trim()) ||
-      (gd.userInfo &&
-        (gd.userInfo.openId || gd.userInfo.openid || gd.userInfo.openID) &&
-        String(gd.userInfo.openId || gd.userInfo.openid || gd.userInfo.openID).trim()) ||
-      ''
-    )
-  } catch (e) {
-    return ''
-  }
-}
-
 function mapClubToView(item, openid, index) {
   const club = (item && item.club) || {}
   const members = Array.isArray(item && item.members) ? item.members : []
@@ -132,70 +118,16 @@ Page({
     userJoinText: '',
     myClubs: [],
     myClubLoading: false,
-    matches: [
-      {
-        id: 'm1',
-        result: 'win', // win | loss
-        type: 'single', // single | double
-        timeText: '今天 14:30',
-        clubName: '羽动青春',
-        scoreText: '21:18, 21:15',
-        left: [{ abbr: '王', name: '我' }],
-        right: [{ abbr: '李', name: '李明' }],
-      },
-      {
-        id: 'm2',
-        result: 'loss',
-        type: 'double',
-        timeText: '昨天 20:10',
-        clubName: '周末羽球群',
-        scoreText: '18:21, 21:19, 12:15',
-        left: [
-          { abbr: '王', name: '我' },
-          { abbr: '张', name: '张宇' },
-        ],
-        right: [
-          { abbr: '陈', name: '陈浩' },
-          { abbr: '刘', name: '刘洋' },
-        ],
-      },
-      {
-        id: 'm3',
-        result: 'win',
-        type: 'single',
-        timeText: '04-26 19:40',
-        clubName: '羽动青春',
-        scoreText: '21:16, 21:13',
-        left: [{ abbr: '王', name: '我' }],
-        right: [{ abbr: '周', name: '周凯' }],
-      },
-      {
-        id: 'm4',
-        result: 'win',
-        type: 'double',
-        timeText: '04-25 21:05',
-        clubName: '周末羽球群',
-        scoreText: '21:17, 21:18',
-        left: [
-          { abbr: '王', name: '我' },
-          { abbr: '李', name: '李雷' },
-        ],
-        right: [
-          { abbr: '赵', name: '赵强' },
-          { abbr: '孙', name: '孙浩' },
-        ],
-      },
-      {
-        id: 'm5',
-        result: 'loss',
-        type: 'single',
-        timeText: '04-24 18:30',
-        clubName: '羽动青春',
-        scoreText: '19:21, 16:21',
-        left: [{ abbr: '王', name: '我' }],
-        right: [{ abbr: '郭', name: '郭磊' }],
-      },
-    ],
+    matches: [],
+    matchLoading: false,
+    // 战绩数字，全部来自 /users/stats 的实时聚合
+    stats: {
+      playedText: '--',
+      winText: '--',
+      winRateText: '--',
+      streakText: '--',
+      diffText: '--',
+    },
   },
 
   syncUserFromGlobal() {
@@ -204,23 +136,13 @@ Page({
     this.setData(mapUserToView(user))
   },
 
-  fetchMyClubs(retryCount = 0) {
-    const openid = pickOpenId()
-    if (!openid) {
-      if (retryCount < 5) {
-        setTimeout(() => {
-          this.fetchMyClubs(retryCount + 1)
-        }, 300)
-      }
-      this.setData({
-        myClubLoading: false,
-        myClubs: [],
-      })
-      return Promise.resolve([])
-    }
+  /** 俱乐部列表：等服务端登录就绪后再拉取，身份由令牌决定 */
+  fetchMyClubs() {
     this.setData({ myClubLoading: true })
-    return CLUB_MY_LIST({ openId: openid })
+    return whenLoginReady()
+      .then(() => CLUB_MY_LIST({ openId: pickOpenId() }))
       .then((list) => {
+        const openid = pickOpenId()
         const raw = Array.isArray(list) ? list : []
         const myClubs = raw.map((item, index) => mapClubToView(item, openid, index)).slice(0, 2)
         this.setData({ myClubs })
@@ -235,9 +157,38 @@ Page({
       })
   },
 
+  /** 战绩与最近比赛：只认后端聚合结果，前端不再拼假数据 */
+  fetchStats() {
+    this.setData({ matchLoading: true })
+    return whenLoginReady()
+      .then(() => USER_STATS({ openId: pickOpenId(), limit: 5 }))
+      .then((data) => {
+        const d = data && typeof data === 'object' ? data : {}
+        const myOpenId = d.openId || pickOpenId()
+        const matches = mapRecentMatches(d.recent, myOpenId)
+        this.setData({
+          matches,
+          stats: formatStats(d.summary),
+        })
+        return matches
+      })
+      .catch(() => {
+        // 拉取失败就保持空态，不拿假数据顶上
+        this.setData({
+          matches: [],
+          stats: formatStats(null),
+        })
+        return []
+      })
+      .finally(() => {
+        this.setData({ matchLoading: false })
+      })
+  },
+
   onShow() {
     this.syncUserFromGlobal()
     this.fetchMyClubs()
+    this.fetchStats()
     if (typeof this.getTabBar === 'function') {
       this.getTabBar((tabBar) => {
         tabBar.setData({
@@ -249,6 +200,12 @@ Page({
     setTimeout(() => {
       this.setData({ enter: true })
     }, 16)
+  },
+
+  onGoMatchDetail(e) {
+    const matchId = e && e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.matchId
+    if (!matchId) return
+    wx.navigateTo({ url: `/pages/match/details/index?id=${matchId}` })
   },
 
   onGoClubList() {

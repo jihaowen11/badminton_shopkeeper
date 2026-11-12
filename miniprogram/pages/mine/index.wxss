@@ -650,3 +650,46 @@ page{
   top: 4rpx;
   left: 0;
 }
+/* ===== 最近比赛空态 ===== */
+.match-empty {
+  padding: 56rpx 32rpx;
+  border-radius: 24rpx;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 0 8rpx 22rpx rgba(0, 0, 0, 0.06);
+}
+
+.match-empty-title {
+  font-size: 30rpx;
+  font-weight: 900;
+  color: rgba(18, 22, 26, 0.82);
+}
+
+.match-empty-desc {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: rgba(18, 22, 26, 0.45);
+}
+
+.match-empty-btn {
+  display: inline-block;
+  margin-top: 26rpx;
+  padding: 0 48rpx;
+  height: 68rpx;
+  line-height: 68rpx;
+  border-radius: 999rpx;
+  font-size: 26rpx;
+  font-weight: 800;
+  color: #ffffff;
+  background: linear-gradient(90deg, #0a8f3e 0%, #0fb35b 100%);
+}
+
+.match-empty-btn::after {
+  border: none;
+}
+
+.match-card-hover {
+  transform: scale(0.985);
+  opacity: 0.92;
+}

@@ -3,7 +3,14 @@ const db = require('../config/db');
 const Sequelize = db.sequelize;
 const matchParticipants = require('../schema/matchParticipants')(Sequelize, DataTypes);
 
-matchParticipants.sync({ force: false });
+// 老库里若已有重复报名，建唯一索引会失败；这里不能让它变成未捕获的 Promise 拒绝，
+// 交给 config/indexes.js 先去重再补索引
+matchParticipants.sync({ force: false }).catch((err) => {
+    console.error(
+        '[match_participants] 建表/索引未完成，将由索引任务重试：',
+        err && err.message ? err.message : err
+    );
+});
 
 class MatchParticipantModel {
     static async create(data, options) {
@@ -74,6 +81,24 @@ class MatchParticipantModel {
         return [...new Set(rows.map((r) => r.matchId).filter((id) => id != null))];
     }
 
+    /**
+     * 某场比赛的报名情况：人数 + 当前最大编号
+     * 供报名时做容量校验和顺延分配编号
+     * @returns {Promise<{count: number, maxNumber: number}>}
+     */
+    static async statsByMatch(matchId) {
+        const rows = await matchParticipants.findAll({
+            where: { matchId },
+            attributes: ['number'],
+        });
+        let maxNumber = 0;
+        for (const row of rows) {
+            const n = Number(row.number);
+            if (Number.isFinite(n) && n > maxNumber) maxNumber = n;
+        }
+        return { count: rows.length, maxNumber };
+    }
+
     /** 批量按比赛 id 拉取成员，按比赛 id、记录 id 升序 */
     static async listByMatchIds(matchIds, options = {}) {
         if (!matchIds || matchIds.length === 0) return [];
@@ -89,6 +114,14 @@ class MatchParticipantModel {
             where: {
                 id
             }
+        })
+    }
+
+    /** 删除某场比赛的全部报名记录（比赛删除时级联清理，避免孤儿数据） */
+    static async deleteByMatchId(matchId, options = {}) {
+        return await matchParticipants.destroy({
+            where: { matchId },
+            ...options
         })
     }
 }

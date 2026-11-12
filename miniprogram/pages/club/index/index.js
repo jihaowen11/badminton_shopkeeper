@@ -1,5 +1,6 @@
 // pages/club/index/index.js
 const { CLUB_MY_LIST } = require('../../../request/api')
+const { whenLoginReady, pickOpenId } = require('../../../utils/auth')
 
 function toDisplayName(name) {
   const text = name == null ? '' : String(name).trim()
@@ -20,22 +21,6 @@ function toAvatarUrl(rawAvatar) {
     }
   } catch (e) {}
   return path
-}
-
-function pickOpenId() {
-  try {
-    const app = getApp()
-    const gd = (app && app.globalData) || {}
-    return (
-      (gd.openid && String(gd.openid).trim()) ||
-      (gd.userInfo &&
-        (gd.userInfo.openId || gd.userInfo.openid || gd.userInfo.openID) &&
-        String(gd.userInfo.openId || gd.userInfo.openid || gd.userInfo.openID).trim()) ||
-      ''
-    )
-  } catch (e) {
-    return ''
-  }
 }
 
 function isOwnerMember(member, clubCreator) {
@@ -84,22 +69,12 @@ Page({
     wx.navigateTo({ url: `/pages/club/details/index?id=${id}` })
   },
 
-  fetchMyClubList(retryCount = 0) {
-    const openid = pickOpenId()
-    if (!openid) {
-      if (retryCount < 5) {
-        setTimeout(() => {
-          this.fetchMyClubList(retryCount + 1)
-        }, 300)
-      }
-      this.setData({
-        clubs: [],
-        joinedCount: 0,
-      })
-      return Promise.resolve([])
-    }
-    return CLUB_MY_LIST({ openId: openid })
+  /** 我的俱乐部：等服务端登录就绪后再拉取，身份由令牌决定 */
+  fetchMyClubList() {
+    return whenLoginReady()
+      .then(() => CLUB_MY_LIST({ openId: pickOpenId() }))
       .then((list) => {
+        const openid = pickOpenId()
         const raw = Array.isArray(list) ? list : []
         const clubs = raw.map((item, index) => mapClubToView(item, openid, index))
         this.setData({

@@ -1,5 +1,6 @@
 // pages/match/index/index.js
 const { MATCH_LIST, MATCH_INCREMENT_VIEWS } = require('../../../request/api')
+const { whenLoginReady, pickOpenId } = require('../../../utils/auth')
 
 const DEFAULT_AVATAR = '/images/noheader.jpg'
 
@@ -12,21 +13,6 @@ function toText(v, fallback = '') {
   return s || fallback
 }
 
-function pickOpenId() {
-  try {
-    const app = getApp()
-    const gd = (app && app.globalData) || {}
-    return (
-      (gd.openid && String(gd.openid).trim()) ||
-      (gd.userInfo &&
-        (gd.userInfo.openId || gd.userInfo.openid || gd.userInfo.openID) &&
-        String(gd.userInfo.openId || gd.userInfo.openid || gd.userInfo.openID).trim()) ||
-      ''
-    )
-  } catch (e) {
-    return ''
-  }
-}
 
 function toAvatarUrl(rawAvatar) {
   const path = rawAvatar == null ? '' : String(rawAvatar).trim()
@@ -121,21 +107,16 @@ Page({
     }
   },
 
-  fetchMatches(pageSize, retryCount = 0) {
-    const openId = pickOpenId()
+  /** 我的比赛：等服务端登录就绪后再拉取，身份由令牌决定 */
+  fetchMatches(pageSize) {
     const limit = pageSize === 50 ? 50 : 10
-    if (!openId) {
-      if (retryCount < 5) {
-        setTimeout(() => this.fetchMatches(limit, retryCount + 1), 300)
-      }
-      return Promise.resolve([])
-    }
     this.setData({
       loading: true,
       filterLimit: limit,
       filterLabel: limit === 50 ? '近50场' : '近10场',
     })
-    return MATCH_LIST({ openId, pageSize: limit, page: 1 })
+    return whenLoginReady()
+      .then(() => MATCH_LIST({ openId: pickOpenId(), pageSize: limit, page: 1 }))
       .then((ret) => {
         const data = ret && typeof ret === 'object' ? ret : {}
         const list = Array.isArray(data.list) ? data.list : []

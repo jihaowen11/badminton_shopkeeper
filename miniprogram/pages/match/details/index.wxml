@@ -1,3 +1,4 @@
+<loading-bar />
 <!--pages/match/details/index.wxml-->
 <view class="page">
   <!-- 分享海报：由 JS 按比赛信息绘制 5:4，导出为临时路径供 onShareAppMessage 使用（不可直接用 WXML 转图） -->
@@ -99,95 +100,172 @@
         <van-icon class="icon org-arrow" name="arrow" size="14" color="rgba(18,22,26,0.35)" />
       </view>
     </view>
+
+    <view wx:if="{{match.joined > 1}}" class="sub-card" bindtap="onGoCost" hover-class="sub-card-hover">
+      <view class="sub-card-title">球费结算</view>
+      <view class="sub-card-row">
+        <text class="cost-hint">人员取自本场报名名单，自动算谁该给谁多少钱</text>
+        <van-icon class="icon" name="arrow" size="14" color="rgba(18,22,26,0.35)" />
+      </view>
+    </view>
   </view>
 
   <view wx:if="{{activeTab === 'pair'}}" class="tab-panel tab-panel--list">
-    <view
-      wx:for="{{pairings}}"
-      wx:key="id"
-      class="pair-card"
-    >
-      <view class="pair-main">
-        <view class="pair-team">
-          <view class="pair-avatars">
-            <view
-              wx:for="{{item.leftPlayers}}"
-              wx:for-item="p"
-              wx:key="id"
-              class="pair-avatar-img"
-            >
-              <image class="pair-avatar-img-inner" mode="aspectFill" src="{{p.avatar}}" />
-              <view wx:if="{{p.isMe}}" class="me-pill">我</view>
-            </view>
-          </view>
-          <view class="pair-names">
-            <view class="pair-name-line">{{item.leftNameLine1}}</view>
-            <view class="pair-name-line pair-name-line-sub">{{item.leftNameLine2}}</view>
-          </view>
+    <view wx:if="{{scheduleLoading}}" class="schedule-empty">排期加载中...</view>
+
+    <block wx:elif="{{scheduleRounds.length === 0}}">
+      <view class="schedule-empty">
+        <view class="schedule-empty-title">还没有排期</view>
+        <view class="schedule-empty-desc">
+          {{canGenerate ? '当前已报名 ' + match.joined + ' 人，生成后按轮自动轮转搭档，每轮尽量不重复。' : '等组织者生成排期后，这里会显示每轮的对阵。'}}
+        </view>
+        <button
+          wx:if="{{canGenerate}}"
+          class="schedule-empty-btn"
+          bindtap="onGenerateSchedule"
+          loading="{{generating}}"
+          disabled="{{generating}}"
+        >{{generating ? '生成中...' : '生成排期'}}</button>
+      </view>
+    </block>
+
+    <block wx:else>
+      <view class="schedule-summary">
+        共 {{scheduleMeta.totalRounds}} 轮 · {{scheduleMeta.totalMatches}} 场 · 已完成 {{scheduleMeta.finishedMatches}} 场
+      </view>
+
+      <view
+        wx:for="{{scheduleRounds}}"
+        wx:for-item="rd"
+        wx:for-index="rdIdx"
+        wx:key="no"
+        class="round-group"
+      >
+        <view class="round-head">
+          <text class="round-title">{{rd.label}}</text>
+          <text class="round-meta">{{rd.courts.length}} 场{{rd.restingText}}</text>
         </view>
 
-        <view class="pair-vs">VS</view>
+        <view
+          wx:for="{{rd.courts}}"
+          wx:for-item="item"
+          wx:for-index="cIdx"
+          wx:key="id"
+          class="pair-card pair-card--tap"
+          data-round-id="{{item.roundId}}"
+          data-index="{{cIdx}}"
+          data-round-index="{{rdIdx}}"
+          bindtap="onTapRound"
+          hover-class="pair-card-hover"
+        >
+          <view class="pair-main">
+            <view class="pair-team">
+              <view class="pair-avatars">
+                <view
+                  wx:for="{{item.team1Players}}"
+                  wx:for-item="p"
+                  wx:key="id"
+                  class="pair-avatar-img"
+                >
+                  <image class="pair-avatar-img-inner" mode="aspectFill" src="{{p.avatar}}" />
+                  <view wx:if="{{p.isMe}}" class="me-pill">我</view>
+                </view>
+              </view>
+              <view class="pair-names">
+                <view class="pair-name-line">{{item.leftNameLine1}}</view>
+                <view class="pair-name-line pair-name-line-sub">{{item.leftNameLine2}}</view>
+              </view>
+            </view>
 
-        <view class="pair-team pair-team--right">
-          <view class="pair-avatars">
-            <view
-              wx:for="{{item.rightPlayers}}"
-              wx:for-item="p"
-              wx:key="id"
-              class="pair-avatar-img"
-            >
-              <image class="pair-avatar-img-inner" mode="aspectFill" src="{{p.avatar}}" />
-              <view wx:if="{{p.isMe}}" class="me-pill">我</view>
+            <view class="pair-vs">VS</view>
+
+            <view class="pair-team pair-team--right">
+              <view class="pair-avatars">
+                <view
+                  wx:for="{{item.team2Players}}"
+                  wx:for-item="p"
+                  wx:key="id"
+                  class="pair-avatar-img"
+                >
+                  <image class="pair-avatar-img-inner" mode="aspectFill" src="{{p.avatar}}" />
+                  <view wx:if="{{p.isMe}}" class="me-pill">我</view>
+                </view>
+              </view>
+              <view class="pair-names pair-names--right">
+                <view class="pair-name-line">{{item.rightNameLine1}}</view>
+                <view class="pair-name-line pair-name-line-sub">{{item.rightNameLine2}}</view>
+              </view>
             </view>
           </view>
-          <view class="pair-names pair-names--right">
-            <view class="pair-name-line">{{item.rightNameLine1}}</view>
-            <view class="pair-name-line pair-name-line-sub">{{item.rightNameLine2}}</view>
+
+          <view class="pair-score-panel">
+            <view class="pair-score-round">{{item.courtLabel}}</view>
+            <view wx:if="{{item.done}}" class="pair-score-line">
+              <text class="pair-score-num {{item.winSide === 'left' ? 'is-win' : ''}}">{{item.scoreLeft}}</text>
+              <text class="pair-score-sep">：</text>
+              <text class="pair-score-num {{item.winSide === 'right' ? 'is-win' : ''}}">{{item.scoreRight}}</text>
+            </view>
+            <view wx:else class="pair-score-pending">{{item.canEdit ? '去记分' : '待开赛'}}</view>
           </view>
         </view>
       </view>
 
-      <view class="pair-score-panel">
-        <view class="pair-score-round">{{item.roundLabel}}</view>
-        <view class="pair-score-line">
-          <text class="pair-score-num {{item.winSide === 'left' ? 'is-win' : ''}}">{{item.scoreLeft}}</text>
-          <text class="pair-score-sep">：</text>
-          <text class="pair-score-num {{item.winSide === 'right' ? 'is-win' : ''}}">{{item.scoreRight}}</text>
+      <view wx:if="{{canGenerate}}" class="schedule-actions">
+        <view class="schedule-action-btn" bindtap="onRegenerate" hover-class="schedule-action-hover">
+          <van-icon name="replay" size="14" color="rgba(18,22,26,0.6)" />
+          <text>重新排期</text>
+        </view>
+        <view
+          wx:if="{{match.statusCode === 2}}"
+          class="schedule-action-btn schedule-action-btn--danger"
+          bindtap="onFinishMatch"
+          hover-class="schedule-action-hover"
+        >
+          <van-icon name="passed" size="14" color="rgba(224,32,32,0.85)" />
+          <text>结束比赛</text>
         </view>
       </view>
-    </view>
+    </block>
   </view>
 
   <view wx:if="{{activeTab === 'rank'}}" class="tab-panel tab-panel--list">
-    <view class="rank-card">
-      <view class="rank-head">
-        <text class="rank-col rank-col--w">名次</text>
-        <text class="rank-col rank-col--grow">选手</text>
-        <text class="rank-col rank-col--wl">胜-负</text>
-        <text class="rank-col rank-col--num">净胜</text>
-      </view>
-      <view
-        wx:for="{{rankings}}"
-        wx:key="id"
-        class="rank-row {{item.rank <= 3 ? 'rank-row--top' : ''}}"
-      >
-        <view class="rank-col rank-col--w">
-          <view wx:if="{{item.rank === 1}}" class="medal medal--gold">1</view>
-          <view wx:elif="{{item.rank === 2}}" class="medal medal--silver">2</view>
-          <view wx:elif="{{item.rank === 3}}" class="medal medal--bronze">3</view>
-          <text wx:else class="rank-num">{{item.rank}}</text>
-        </view>
-        <view class="rank-col rank-col--grow rank-name-wrap">
-          <view class="rank-avatar-wrap">
-            <image class="rank-avatar-img" mode="aspectFill" src="{{item.avatar}}" />
-            <view wx:if="{{item.isMe}}" class="me-pill me-pill--small">我</view>
-          </view>
-          <text class="rank-name">{{item.name}}</text>
-        </view>
-        <text class="rank-col rank-col--wl"><text class="wl-a">{{item.win}}</text><text class="wl-sep">-</text><text class="wl-b">{{item.lose}}</text></text>
-        <text class="rank-col rank-col--num">{{item.diff}}</text>
-      </view>
+    <view wx:if="{{scheduleMeta.finishedMatches === 0}}" class="schedule-empty">
+      <view class="schedule-empty-title">还没有比分</view>
+      <view class="schedule-empty-desc">打完第一场并录入比分后，这里会实时算出胜-负与净胜分排名。</view>
     </view>
+
+    <block wx:else>
+      <view class="schedule-summary">已统计 {{scheduleMeta.finishedMatches}} 场 · 排序：胜场 → 净胜分 → 得分</view>
+      <view class="rank-card">
+        <view class="rank-head">
+          <text class="rank-col rank-col--w">名次</text>
+          <text class="rank-col rank-col--grow">选手</text>
+          <text class="rank-col rank-col--wl">胜-负</text>
+          <text class="rank-col rank-col--num">净胜</text>
+        </view>
+        <view
+          wx:for="{{rankings}}"
+          wx:key="id"
+          class="rank-row {{item.rank <= 3 ? 'rank-row--top' : ''}}"
+        >
+          <view class="rank-col rank-col--w">
+            <view wx:if="{{item.rank === 1}}" class="medal medal--gold">1</view>
+            <view wx:elif="{{item.rank === 2}}" class="medal medal--silver">2</view>
+            <view wx:elif="{{item.rank === 3}}" class="medal medal--bronze">3</view>
+            <text wx:else class="rank-num">{{item.rank}}</text>
+          </view>
+          <view class="rank-col rank-col--grow rank-name-wrap">
+            <view class="rank-avatar-wrap">
+              <image class="rank-avatar-img" mode="aspectFill" src="{{item.avatar}}" />
+              <view wx:if="{{item.isMe}}" class="me-pill me-pill--small">我</view>
+            </view>
+            <text class="rank-name">{{item.name}}</text>
+          </view>
+          <text class="rank-col rank-col--wl"><text class="wl-a">{{item.win}}</text><text class="wl-sep">-</text><text class="wl-b">{{item.lose}}</text></text>
+          <text class="rank-col rank-col--num">{{item.diff}}</text>
+        </view>
+      </view>
+    </block>
   </view>
 
   <view class="page-footer">

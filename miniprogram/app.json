@@ -52,6 +52,7 @@
   "lazyCodeLoading": "requiredComponents",
   "usingComponents": {
     "van-row": "/dist/row/index",
-    "van-col": "/dist/col/index"
+    "van-col": "/dist/col/index",
+    "loading-bar": "/components/loading-bar/index"
   }
 }

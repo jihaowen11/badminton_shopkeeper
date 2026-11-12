@@ -1,3 +1,4 @@
+<loading-bar />
 <!--pages/user/person/index.wxml-->
 <view class="page">
   <back  scrollTop="{{pageScrollTop}}"/>
@@ -59,10 +60,17 @@
       </view>
     </view>
 
+    <view wx:if="{{matches.length === 0}}" class="match-empty">
+      <view class="match-empty-desc">{{loading ? '战绩加载中...' : '还没有比赛记录'}}</view>
+    </view>
+
     <view
       wx:for="{{matches}}"
       wx:key="id"
       class="match-card {{item.result === 'win' ? 'is-win' : 'is-loss'}}"
+      data-match-id="{{item.matchId}}"
+      bindtap="onGoMatchDetail"
+      hover-class="match-card-hover"
     >
       <view class="match-stripe"></view>
       <view class="match-head">

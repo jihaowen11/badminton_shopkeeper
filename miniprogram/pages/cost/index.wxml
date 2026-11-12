@@ -1,3 +1,4 @@
+<loading-bar />
 <!--pages/cost/index.wxml-->
 <view class="page">
   <back scrollTop="{{pageScrollTop}}" />
@@ -24,6 +25,10 @@
 
   <view class="sheet">
     <view class="sheet-inner">
+    <view wx:if="{{fromMatch}}" class="match-tip">
+      <van-icon name="records" size="28rpx" color="#0a8f3e" />
+      <text class="match-tip-text">人员来自比赛报名名单{{matchTitle ? '：' + matchTitle : ''}}</text>
+    </view>
     <view class="card">
       <view class="card-head">
         <view class="card-title">
@@ -136,6 +141,29 @@
             <image class="line-avatar-img" src="{{item.payerAvatar}}" mode="aspectFill" />
           </view>
         </view>
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="card-head">
+        <view class="card-title">
+          <van-icon class="icon" name="gold-coin-o" size="32rpx" color="#ff9800" />
+          <text>结算建议</text>
+        </view>
+        <text class="people-count">{{settlements.length ? settlements.length + ' 笔转账' : '无需转账'}}</text>
+      </view>
+
+      <view wx:if="{{settlements.length === 0}}" class="settle-empty">
+        {{totalText === '0' ? '填好费用后，按「谁垫付、谁该还」自动算出转账方案' : '当前费用已结清，无需转账'}}
+      </view>
+
+      <view wx:for="{{settlements}}" wx:key="key" class="settle-row">
+        <view class="settle-name settle-name--from">{{item.from}}</view>
+        <view class="settle-arrow">
+          <van-icon name="arrow" size="24rpx" color="rgba(18,22,26,0.35)" />
+        </view>
+        <view class="settle-name settle-name--to">{{item.to}}</view>
+        <view class="settle-amount">¥{{item.amountText}}</view>
       </view>
     </view>
     </view>

@@ -59,5 +59,10 @@ module.exports = function (sequelize, DataTypes) {
         }
     }, {
         freezeTableName: true,
+        indexes: [
+            { name: 'idx_mp_user', fields: ['user_id'] },
+            // 同一场比赛同一人只能报名一次；并发场景靠它兜底，避免写入两条重复记录
+            { name: 'uk_mp_match_user', unique: true, fields: ['match_id', 'user_id'] }
+        ]
     })
 }

@@ -6,7 +6,11 @@ const {
   MATCH_INVITE_CLUB_MEMBERS,
   MATCH_INCREMENT_VIEWS,
   MATCH_JOIN,
+  MATCH_ROUNDS_LIST,
+  MATCH_ROUNDS_GENERATE,
 } = require('../../../request/api')
+
+const DEFAULT_AVATAR = '/images/noheader.jpg'
 
 function pad2(n) {
   return String(n).padStart(2, '0')
@@ -148,6 +152,7 @@ function mapMatch(match, participants, club) {
     formatLine: toText(m.competitionFormat, '--'),
     peopleLine: `实报${joined}人，计划${capacity}人，共${sessions}场`,
     pairStyle: '随机大乱斗',
+    targetScore: Number(m.targetScore || 0),
     viewPeople: joined,
     views: Number(m.views || 0),
     joined,
@@ -350,79 +355,85 @@ function drawSharePoster(ctx, match) {
   ctx.textBaseline = 'alphabetic'
 }
 
-function buildMockPairings() {
-  const avatarPool = [
-    'https://img.yzcdn.cn/vant/cat.jpeg',
-    'https://img.yzcdn.cn/vant/cat.jpeg',
-    'https://img.yzcdn.cn/vant/cat.jpeg',
-    'https://img.yzcdn.cn/vant/cat.jpeg',
-  ]
-  const raw = [
-    {
-      id: 'p1',
-      roundLabel: '第1场',
-      left: [
-        { id: 'l1', name: '2号徐', avatar: avatarPool[0], isMe: false },
-        { id: 'l2', name: '7号大勇', avatar: avatarPool[1], isMe: false },
-      ],
-      right: [
-        { id: 'r1', name: '4号esccry', avatar: avatarPool[2], isMe: true },
-        { id: 'r2', name: '5号熊', avatar: avatarPool[3], isMe: false },
-      ],
-      scoreLeft: 8,
-      scoreRight: 21,
-    },
-    {
-      id: 'p2',
-      roundLabel: '第2场',
-      left: [
-        { id: 'l1', name: '1号吕', avatar: avatarPool[0], isMe: false },
-        { id: 'l2', name: '6号刘飞', avatar: avatarPool[1], isMe: false },
-      ],
-      right: [
-        { id: 'r1', name: '3号小熊', avatar: avatarPool[2], isMe: false },
-        { id: 'r2', name: '4号esccry', avatar: avatarPool[3], isMe: true },
-      ],
-      scoreLeft: 21,
-      scoreRight: 11,
-    },
-  ]
-  return raw.map((p) => {
-    const leftPlayers = (p.left || []).slice(0, 2)
-    const rightPlayers = (p.right || []).slice(0, 2)
-    const winSide =
-      Number(p.scoreLeft) === Number(p.scoreRight)
-        ? 'draw'
-        : Number(p.scoreLeft) > Number(p.scoreRight)
-          ? 'left'
-          : 'right'
+/** 排期里一个选手在页面上的形态 */
+function mapSchedulePlayer(p, currentOpenId) {
+  const openId = toText(p && p.openId)
+  const name = toText(p && p.name, '球友')
+  return {
+    id: openId || name,
+    openId,
+    name,
+    avatar: toAvatarUrl(p && p.avatar) || DEFAULT_AVATAR,
+    isMe: !!openId && openId === toText(currentOpenId),
+  }
+}
+
+/**
+ * 把 /matchRounds/list 的返回映射成页面结构
+ * 输出：按轮分组，每轮若干场，附带每场的展示字段
+ */
+function mapSchedule(payload, currentOpenId) {
+  const raw = payload && typeof payload === 'object' ? payload : {}
+  const rawRounds = Array.isArray(raw.rounds) ? raw.rounds : []
+  return rawRounds.map((rd) => {
+    const courts = (Array.isArray(rd.courts) ? rd.courts : []).map((c) => {
+      const team1 = (Array.isArray(c.team1) ? c.team1 : []).map((p) => mapSchedulePlayer(p, currentOpenId))
+      const team2 = (Array.isArray(c.team2) ? c.team2 : []).map((p) => mapSchedulePlayer(p, currentOpenId))
+      const done = !!c.done
+      const s1 = Number(c.score1)
+      const s2 = Number(c.score2)
+      return {
+        id: `${rd.no}_${c.courtNo}`,
+        roundId: c.id,
+        courtNo: c.courtNo,
+        courtLabel: `${c.courtNo || 1}号场`,
+        team1Players: team1,
+        team2Players: team2,
+        leftNameLine1: team1[0] ? team1[0].name : '',
+        leftNameLine2: team1[1] ? team1[1].name : '',
+        rightNameLine1: team2[0] ? team2[0].name : '',
+        rightNameLine2: team2[1] ? team2[1].name : '',
+        scoreLeft: done && Number.isFinite(s1) ? s1 : 0,
+        scoreRight: done && Number.isFinite(s2) ? s2 : 0,
+        done,
+        canEdit: !!c.canEdit,
+        winSide: done && Number.isFinite(s1) && Number.isFinite(s2)
+          ? s1 === s2
+            ? 'draw'
+            : s1 > s2
+              ? 'left'
+              : 'right'
+          : '',
+      }
+    })
+    const resting = (Array.isArray(rd.resting) ? rd.resting : []).map((p) => mapSchedulePlayer(p, currentOpenId))
     return {
-      id: p.id,
-      roundLabel: p.roundLabel,
-      leftPlayers,
-      rightPlayers,
-      leftNameLine1: leftPlayers[0] ? leftPlayers[0].name : '',
-      leftNameLine2: leftPlayers[1] ? leftPlayers[1].name : '',
-      rightNameLine1: rightPlayers[0] ? rightPlayers[0].name : '',
-      rightNameLine2: rightPlayers[1] ? rightPlayers[1].name : '',
-      scoreLeft: p.scoreLeft,
-      scoreRight: p.scoreRight,
-      winSide,
+      no: rd.no,
+      label: toText(rd.label, `第${rd.no}轮`),
+      courts,
+      resting,
+      restingText: resting.length ? ` · 轮空 ${resting.map((p) => p.name).join('、')}` : '',
     }
   })
 }
 
-function buildMockRankings() {
-  const avatarPool = [
-    'https://img.yzcdn.cn/vant/cat.jpeg',
-    'https://img.yzcdn.cn/vant/cat.jpeg',
-    'https://img.yzcdn.cn/vant/cat.jpeg',
-  ]
-  return [
-    { id: 'r1', rank: 1, name: '张三', avatar: avatarPool[0], isMe: false, win: 7, lose: 1, diff: 46 },
-    { id: 'r2', rank: 2, name: '李四', avatar: avatarPool[1], isMe: false, win: 5, lose: 2, diff: 36 },
-    { id: 'r3', rank: 3, name: '王五', avatar: avatarPool[2], isMe: true, win: 4, lose: 3, diff: 8 },
-  ]
+/** 排名映射（后端已按 胜场→净胜分→得分 排好序，这里只做展示转换） */
+function mapRankings(list, currentOpenId) {
+  const rows = Array.isArray(list) ? list : []
+  return rows.map((item, index) => {
+    const openId = toText(item && item.openId)
+    return {
+      id: openId || `r_${index}`,
+      rank: item && item.rank != null ? item.rank : '-',
+      name: toText(item && item.name, '球友'),
+      avatar: toAvatarUrl(item && item.avatar) || DEFAULT_AVATAR,
+      isMe: !!openId && openId === toText(currentOpenId),
+      played: Number(item && item.played) || 0,
+      win: Number(item && item.win) || 0,
+      lose: Number(item && item.lose) || 0,
+      diff: Number(item && item.diff) || 0,
+    }
+  })
 }
 
 Page({
@@ -433,7 +444,14 @@ Page({
     match: {},
     organizer: {},
     regPreview: [],
-    pairings: [],
+    /** 按轮分组的真实排期 */
+    scheduleRounds: [],
+    /** 排期元信息：是否已生成、总场次、已完成场次 */
+    scheduleMeta: { generated: false, totalRounds: 0, totalMatches: 0, finishedMatches: 0, courts: 0 },
+    /** 当前用户是否可生成/重排排期（组织者） */
+    canGenerate: false,
+    scheduleLoading: true,
+    generating: false,
     rankings: [],
     canManageFooter: false,
     showInviteClub: false,
@@ -455,17 +473,28 @@ Page({
   },
 
   onLoad(options) {
-    const id = options.id ? String(options.id) : 'm3'
+    const id = options && options.id ? String(options.id) : ''
+    // 没有 id 就直接说明情况，不要拿占位 id 去请求一个不存在的比赛
+    if (!id) {
+      wx.showToast({ title: '缺少比赛信息', icon: 'none' })
+      setTimeout(() => {
+        const pages = getCurrentPages()
+        if (pages.length > 1) {
+          wx.navigateBack()
+        } else {
+          wx.switchTab({ url: '/pages/index/index' })
+        }
+      }, 900)
+      return
+    }
     const mode = options && options.mode
     const isShareMode = String(mode || '').toLowerCase() === 'share'
     this.setData({
       matchId: id,
       isShareMode,
-      pairings: buildMockPairings(),
-      rankings: buildMockRankings(),
     })
     this.fetchMatchDetail(id)
-    if (isShareMode && id) {
+    if (isShareMode) {
       MATCH_INCREMENT_VIEWS({ id }).catch(() => {})
     }
   },
@@ -503,12 +532,11 @@ Page({
           match: mappedMatch,
           organizer: mapOrganizer(payload.organizer),
           regPreview: mapRegPreview(participants),
-          pairings: buildMockPairings(),
-          rankings: buildMockRankings(),
           canManageFooter,
           showInviteClub,
           registeredOpenIds,
           hasJoined,
+          canGenerate: !!currentOpenId && currentOpenId === createdBy,
         }
         if (refreshPoster) {
           nextData.shareImageUrl = ''
@@ -526,9 +554,150 @@ Page({
             }, 80)
           },
         )
+        // 排期单独拉一次：门票（报名信息）失败也不该影响它
+        this.fetchSchedule(id)
         return ret
       })
       .catch(() => null)
+  },
+
+  /** 拉取排期与排名 */
+  fetchSchedule(id) {
+    if (!id) return Promise.resolve(null)
+    this.setData({ scheduleLoading: true })
+    return MATCH_ROUNDS_LIST({ matchId: id })
+      .then((ret) => {
+        const payload = ret && typeof ret === 'object' ? ret : {}
+        const currentOpenId = pickOpenId()
+        this.setData({
+          scheduleRounds: mapSchedule(payload, currentOpenId),
+          rankings: mapRankings(payload.rankings, currentOpenId),
+          canGenerate: !!payload.canManage,
+          scheduleMeta: {
+            generated: !!payload.generated,
+            totalRounds: Number(payload.totalRounds) || 0,
+            totalMatches: Number(payload.totalMatches) || 0,
+            finishedMatches: Number(payload.finishedMatches) || 0,
+            courts: Number(payload.courts) || 0,
+            targetScore: payload.targetScore != null ? Number(payload.targetScore) : 0,
+          },
+          scheduleLoading: false,
+        })
+        return payload
+      })
+      .catch(() => {
+        this.setData({ scheduleRounds: [], rankings: [], scheduleLoading: false })
+        return null
+      })
+  },
+
+  /** 生成排期（组织者） */
+  onGenerateSchedule() {
+    if (this.data.generating) return
+    const id = toText(this.data.matchId)
+    if (!id) return
+    const joined = Number(this.data.match && this.data.match.joined) || 0
+    if (joined < 4) {
+      wx.showToast({ title: '至少 4 人报名才能排期', icon: 'none' })
+      return
+    }
+    this.setData({ generating: true })
+    wx.showLoading({ title: '排期中...', mask: true })
+    MATCH_ROUNDS_GENERATE({ matchId: id })
+      .then(() => {
+        wx.showToast({ title: '排期已生成', icon: 'success' })
+        return this.fetchSchedule(id)
+      })
+      .then(() => this.fetchMatchDetail(id, { refreshPoster: false }))
+      .catch(() => {})
+      .finally(() => {
+        wx.hideLoading()
+        this.setData({ generating: false })
+      })
+  },
+
+  /** 重新排期：已有比分时要二次确认 */
+  onRegenerate() {
+    if (this.data.generating) return
+    const id = toText(this.data.matchId)
+    if (!id) return
+    const finished = Number(this.data.scheduleMeta.finishedMatches) || 0
+    const doGenerate = (force) => {
+      this.setData({ generating: true })
+      wx.showLoading({ title: '排期中...', mask: true })
+      MATCH_ROUNDS_GENERATE({ matchId: id, force: !!force })
+        .then(() => {
+          wx.showToast({ title: '已重新排期', icon: 'success' })
+          return this.fetchSchedule(id)
+        })
+        .catch(() => {})
+        .finally(() => {
+          wx.hideLoading()
+          this.setData({ generating: false })
+        })
+    }
+    if (finished > 0) {
+      wx.showModal({
+        title: '重新排期',
+        content: `已有 ${finished} 场录入比分，重新排期会同时清空这些比分，确定继续吗？`,
+        confirmText: '重新排期',
+        success: (res) => {
+          if (res.confirm) doGenerate(true)
+        },
+      })
+      return
+    }
+    doGenerate(false)
+  },
+
+  /** 进入记分板 */
+  onTapRound(e) {
+    const roundId = e.currentTarget.dataset.roundId
+    const idx = Number(e.currentTarget.dataset.index)
+    const rdIdx = Number(e.currentTarget.dataset.roundIndex)
+    if (!roundId) return
+    const round = this.data.scheduleRounds[rdIdx]
+    const court = round && round.courts ? round.courts[idx] : null
+    if (!court) return
+    const names1 = court.team1Players.map((p) => p.name).join(' / ')
+    const names2 = court.team2Players.map((p) => p.name).join(' / ')
+    const target = Number(this.data.scheduleMeta.targetScore) || Number(this.data.match && this.data.match.targetScore) || 21
+    const query = [
+      `roundId=${roundId}`,
+      `matchId=${encodeURIComponent(toText(this.data.matchId))}`,
+      `t1=${encodeURIComponent(names1)}`,
+      `t2=${encodeURIComponent(names2)}`,
+      `target=${target}`,
+      `r=${round ? round.no : ''}`,
+      `c=${court.courtNo}`,
+      court.done ? `s1=${court.scoreLeft}` : '',
+      court.done ? `s2=${court.scoreRight}` : '',
+    ]
+        .filter(Boolean)
+        .join('&')
+    wx.navigateTo({ url: `/pages/scoreboard/index?${query}` })
+  },
+
+  /** 结束整场比赛 */
+  onFinishMatch() {
+    const id = toText(this.data.matchId)
+    if (!id) return
+    wx.showModal({
+      title: '结束比赛',
+      content: '结束后不再允许修改比分，确定结束吗？',
+      confirmText: '结束',
+      success: (res) => {
+        if (!res.confirm) return
+        wx.showLoading({ title: '处理中...', mask: true })
+        MATCH_UPDATE_STATUS({ id, status: 3 })
+          .then(() => {
+            wx.showToast({ title: '比赛已结束', icon: 'success' })
+            return this.fetchMatchDetail(id, { refreshPoster: false })
+          })
+          .catch(() => {})
+          .finally(() => wx.hideLoading())
+      },
+    })
   },
 
   renderSharePoster() {
@@ -604,6 +773,13 @@ Page({
     const openId = toText(this.data.organizer && this.data.organizer.openId)
     if (!openId) return
     wx.navigateTo({ url: `/pages/user/person/index?openId=${encodeURIComponent(openId)}` })
+  },
+
+  /** 球费结算：人员直接带这场比赛报名名单 */
+  onGoCost() {
+    const matchId = toText(this.data.matchId)
+    if (!matchId) return
+    wx.navigateTo({ url: `/pages/cost/index?matchId=${encodeURIComponent(matchId)}` })
   },
 
   onJoinMatch() {
@@ -808,8 +984,11 @@ Page({
     const idx = Math.floor(Math.random() * 6) + 1
     const fallback = `/images/share/${idx}.jpg`
     const pathCached = toText(this.data.shareImageUrl)
-    const id = toText(this.data.matchId) || 'm3'
-    const basePath = `/pages/match/details/index?id=${encodeURIComponent(id)}&mode=share`
+    const id = toText(this.data.matchId)
+    // 没有比赛 id 时分享首页，避免把用户导向一个不存在的详情页
+    const basePath = id
+      ? `/pages/match/details/index?id=${encodeURIComponent(id)}&mode=share`
+      : '/pages/index/index'
     const payload = {
       title: `${t} · 邀请你参赛`,
       path: basePath,

@@ -1,3 +1,4 @@
+<loading-bar />
 <!--index.wxml-->
 <view class="home {{enter ? 'is-enter' : ''}}">
   <view class="hero">
@@ -21,8 +22,8 @@
           <van-icon class="icon" name="friends-o" size="38rpx" color="#0a8f3e" />
         </view>
         <view class="stat-meta">
-          <view class="stat-value">10K+</view>
-          <view class="stat-label">活跃球友</view>
+          <view class="stat-value">{{overview.usersText}}</view>
+          <view class="stat-label">球友</view>
         </view>
       </view>
 
@@ -31,18 +32,18 @@
           <van-icon class="icon" name="todo-list-o" size="38rpx" color="#0a8f3e" />
         </view>
         <view class="stat-meta">
-          <view class="stat-value">50K+</view>
-          <view class="stat-label">场次记录</view>
+          <view class="stat-value">{{overview.roundsText}}</view>
+          <view class="stat-label">已开场次</view>
         </view>
       </view>
 
       <view class="stat">
         <view class="stat-icon">
-          <van-icon class="icon" name="like-o" size="38rpx" color="#0a8f3e" />
+          <van-icon class="icon" name="cluster-o" size="38rpx" color="#0a8f3e" />
         </view>
         <view class="stat-meta">
-          <view class="stat-value">99%</view>
-          <view class="stat-label">好评率</view>
+          <view class="stat-value">{{overview.clubsText}}</view>
+          <view class="stat-label">俱乐部</view>
         </view>
       </view>
     </view>
@@ -108,14 +109,18 @@
       </view>
     </view>
 
-    <view class="tip-card enter-item delay-6">
+    <view wx:if="{{tipVisible || tipLoading}}" class="tip-card enter-item delay-6">
       <view class="tip-left">
         <view class="tip-icon">
           <van-icon class="icon" name="star-o" size="18" color="#0a8f3e" />
         </view>
         <view class="tip-meta">
-          <view class="tip-title">今日贴士</view>
-          <view class="tip-text">想要提高步法速度？试试“小碎步”训练，能够显著提升场上灵活性和反应速度。</view>
+          <view class="tip-head">
+            <view class="tip-title">今日贴士</view>
+            <view wx:if="{{tip.category}}" class="tip-tag">{{tip.category}}</view>
+          </view>
+          <view wx:if="{{tipLoading}}" class="tip-text tip-text--loading">正在获取今日贴士…</view>
+          <view wx:else class="tip-text">{{tip.content}}</view>
         </view>
       </view>
       <view class="tip-decor"></view>
