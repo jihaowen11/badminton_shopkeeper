@@ -5,7 +5,7 @@
  * 注意：真机调试与上线必须使用 https，且域名要加入小程序后台的
  * request 合法域名 / uploadFile 合法域名白名单。
  */
-const ENV = 'dev' // dev | prod
+const ENV = 'prod' // dev | prod
 
 const PROFILES = {
   dev: {
@@ -14,9 +14,10 @@ const PROFILES = {
     code: 'v0.9',
   },
   prod: {
-    // TODO: 换成正式域名（需备案 + https）
-    serverUrl: 'https://api.example.com',
-    staticUrl: 'https://api.example.com',
+    // 已部署到腾讯云：Nginx 以 /api/badminton 前缀反代到 127.0.0.1:3001
+    // 注意这里带路径前缀，而微信后台的 request/uploadFile 合法域名只填 https://esccry.top
+    serverUrl: 'https://esccry.top/api/badminton',
+    staticUrl: 'https://esccry.top/api/badminton',
     code: 'v0.9',
   },
 }

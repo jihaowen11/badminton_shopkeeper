@@ -15,6 +15,7 @@ const { pickOpenId } = require('../../../utils/auth')
 const { pad2, toText } = require('../../../utils/format')
 const { toAvatarUrl, toStaticUrl, DEFAULT_AVATAR } = require('../../../utils/static')
 const { createScrollSync } = require('../../../utils/scrollSync')
+const { requireProfile, isProfileComplete, getCurrentUser } = require('../../../utils/profile')
 
 function formatDateLine(raw) {
   if (!raw) return '--'
@@ -102,16 +103,6 @@ function hasJoinedMatch(registeredSet, openId) {
   const oid = toText(openId)
   if (!oid) return false
   return registeredSet.has(oid)
-}
-
-function isProfileCompleted(userInfo) {
-  const u = userInfo && typeof userInfo === 'object' ? userInfo : {}
-  const nick = toText(u.nickName)
-  const avatar = toText(u.avatar)
-  if (!nick || nick.indexOf('羽球人') === 0) return false
-  if (!avatar) return false
-  if (avatar.indexOf('/images/') === 0) return false
-  return true
 }
 
 function mapMatch(match, participants, club) {
@@ -577,6 +568,8 @@ Page({
     inviteTip: '',
     /** 从分享链接进入 */
     isShareMode: false,
+    /** 详情拉取失败（分享卡片指向的比赛可能已被取消或删除） */
+    loadFailed: false,
     /** 当前用户是否已报名 */
     hasJoined: false,
     joining: false,
@@ -616,6 +609,14 @@ Page({
     if (!this._pageReady) {
       this._pageReady = true
       return
+    }
+    // 从资料页回来且资料刚补齐：先把上次被拦的报名继续做完，避免二次点击
+    if (this._pendingJoin) {
+      this._pendingJoin = false
+      if (isProfileComplete(getCurrentUser())) {
+        this.onJoinMatch()
+        return
+      }
     }
     const id = toText(this.data.matchId)
     if (id) {
@@ -662,6 +663,7 @@ Page({
           registeredOpenIds,
           hasJoined,
           canGenerate: !!currentOpenId && currentOpenId === createdBy,
+          loadFailed: false,
         }
         if (refreshPoster) {
           nextData.shareImageUrl = ''
@@ -683,7 +685,23 @@ Page({
         if (!skipSchedule) this.fetchSchedule(id)
         return ret
       })
-      .catch(() => null)
+      .catch(() => {
+        // 分享卡片可能指向已被删除的比赛：给出明确空态，别停在空白骨架
+        if (!this.data.match || !this.data.match.id) {
+          this.setData({ loadFailed: true })
+        }
+        return null
+      })
+  },
+
+  /** 空态里的"回到首页"：分享页往往没有上一页，直接切 tab */
+  onBackHome() {
+    wx.switchTab({
+      url: '/pages/index/index',
+      fail: () => {
+        wx.reLaunch({ url: '/pages/index/index' })
+      },
+    })
   },
 
   /** 拉取排期与排名 */
@@ -1289,27 +1307,26 @@ Page({
     const openid = pickOpenId()
     const userInfo = (app && app.globalData && app.globalData.userInfo) || {}
     if (!openid) {
+      // 新用户从分享进来时首次登录可能失败，这里补一次重登并自动重试，别让按钮变成死路
+      const app0 = getApp()
+      if (!this._loginRetried && app0 && typeof app0.relogin === 'function') {
+        this._loginRetried = true
+        app0.relogin().then(() => this.onJoinMatch())
+        return
+      }
       wx.showToast({ title: '请先登录后再报名', icon: 'none' })
       return
     }
-    if (!isProfileCompleted(userInfo)) {
-      const shareQuery = this.data.isShareMode ? '&mode=share' : ''
-      const returnUrl = encodeURIComponent(
-        `/pages/match/details/index?id=${encodeURIComponent(matchId)}${shareQuery}`,
-      )
-      wx.showModal({
-        title: '提示',
-        content: '请先完善昵称和头像信息，再报名比赛。',
-        confirmText: '去完善',
-        success: (res) => {
-          if (!res.confirm) return
-          wx.navigateTo({
-            url: `/pages/user/info/index?from=matchShareJoin&matchId=${encodeURIComponent(matchId)}&returnUrl=${returnUrl}`,
-          })
+    // 资料闸门：头像或昵称任一项完善即可，两项都是默认值才拦。
+    // 记一笔待续动作，用户从资料页回来时自动把报名继续做完
+    if (
+      !requireProfile('报名比赛', {
+        onNeed: () => {
+          this._pendingJoin = true
         },
       })
+    )
       return
-    }
     const payload = {
       matchId: Number(matchId) || matchId,
       userId: openid,
@@ -1493,7 +1510,11 @@ Page({
 
 
   onShareAppMessage() {
-    const t = this.data.match.title || '比赛'
+    const m = this.data.match || {}
+    const t = toText(m.title) || '羽球局'
+    const when = toText(m.dateLine)
+    const where = toText(m.clubLine)
+    const ctx = [when, where].filter(Boolean).join(' · ')
     const idx = Math.floor(Math.random() * 6) + 1
     const fallback = `/images/share/${idx}.jpg`
     const pathCached = toText(this.data.shareImageUrl)
@@ -1503,7 +1524,7 @@ Page({
       ? `/pages/match/details/index?id=${encodeURIComponent(id)}&mode=share`
       : '/pages/index/index'
     const payload = {
-      title: `${t} · 邀请你参赛`,
+      title: ctx ? `${ctx} · ${t}，邀你参赛` : `${t} · 邀你参赛`,
       path: basePath,
       imageUrl: pathCached || fallback,
     }

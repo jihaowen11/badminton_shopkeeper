@@ -2,6 +2,7 @@
 const { MATCH_ROUNDS_LIST, MATCH_ROUNDS_SUBMIT_SCORE } = require('../../request/api')
 const { pad2 } = require('../../utils/format')
 const { createScrollSync } = require('../../utils/scrollSync')
+const { randomShareImage } = require('../../utils/shareCard')
 
 const STORAGE_KEY = 'scoreboard_records'
 
@@ -356,6 +357,10 @@ Page({
   },
 
   onShareAppMessage() {
-    return { title: '计分器', path: '/pages/scoreboard/index' }
+    return {
+      title: '羽毛球计分器：左右比分，一点就加分',
+      path: '/pages/scoreboard/index',
+      imageUrl: randomShareImage(),
+    }
   },
 })

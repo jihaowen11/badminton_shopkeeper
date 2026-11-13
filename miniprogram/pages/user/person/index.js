@@ -3,6 +3,7 @@ const { FIND_USER, USER_STATS } = require('../../../request/api')
 const { whenLoginReady, pickOpenId } = require('../../../utils/auth')
 const { toText } = require('../../../utils/format')
 const { toAvatarUrl } = require('../../../utils/static')
+const { randomShareImage } = require('../../../utils/shareCard')
 const { mapRecentMatches, formatStats } = require('../../../utils/matchView')
 const { createScrollSync } = require('../../../utils/scrollSync')
 
@@ -102,9 +103,11 @@ Page({
 
   onShareAppMessage() {
     const openId = toText(this.data.openId)
+    const name = toText(this.data.user && this.data.user.name)
     return {
-      title: `${this.data.user.name} 的个人信息`,
+      title: name ? `${name} 的羽毛球档案` : '球友的羽毛球档案',
       path: openId ? `/pages/user/person/index?openId=${encodeURIComponent(openId)}` : '/pages/user/person/index',
+      imageUrl: randomShareImage(),
     }
   },
 })

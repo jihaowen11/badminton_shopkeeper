@@ -1,5 +1,12 @@
 <loading-bar />
 <!--pages/club/details/index.wxml-->
+<!-- 分享卡片指向的俱乐部被解散时，给出明确空态 -->
+<view wx:if="{{loadFailed}}" class="load-failed">
+  <van-icon name="warning-o" size="64rpx" color="rgba(217,134,10,0.6)" />
+  <view class="load-failed-title">俱乐部不存在或已解散</view>
+  <view class="load-failed-desc">这个分享可能已经过期，去看看别的俱乐部吧</view>
+  <view class="load-failed-btn" bindtap="onBackHome" hover-class="load-failed-btn-hover">回到首页</view>
+</view>
 <view class="page">
   <back  scrollTop="{{membersScrollTop}}"/>
 

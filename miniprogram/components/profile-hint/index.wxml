@@ -1,0 +1,15 @@
+<!-- 资料完善轻提示：浮在底部的小横条，不遮挡页面、不拦截其他操作 -->
+<view
+  class="phint {{visible ? 'is-visible' : ''}}"
+  style="bottom: calc({{bottom}}rpx + env(safe-area-inset-bottom))"
+>
+  <view class="phint-bar"></view>
+
+  <view class="phint-main" bindtap="onTap" hover-class="phint-main-hover" hover-stay-time="80">
+    <view class="phint-title">完善个人资料</view>
+    <view class="phint-desc">{{descText}}</view>
+  </view>
+
+  <view class="phint-go" catchtap="onTap">去完善</view>
+  <view class="phint-close" catchtap="onClose" hover-class="phint-close-hover">×</view>
+</view>

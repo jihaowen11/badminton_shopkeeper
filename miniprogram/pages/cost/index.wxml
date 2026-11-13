@@ -5,7 +5,7 @@
 
   <view class="hero">
     <canvas type="2d" id="costBallCanvas" class="hero-canvas"></canvas>
-    <view class="hero-page-title">费用计算</view>
+    <view class="hero-page-title">{{shared ? '好友分享的账单' : '费用计算'}}</view>
     <view class="hero-inner">
       <view class="hero-main">
         <view class="hero-wallet">
@@ -46,9 +46,10 @@
             <image class="people-avatar-img" src="{{item.avatar}}" mode="aspectFill" />
           </view>
         </view>
-        <view class="people-add" bindtap="onAddParticipant" hover-class="people-add-hover">+ 人员</view>
+        <view class="people-add" wx:if="{{!shared}}" bindtap="onAddParticipant" hover-class="people-add-hover">+ 人员</view>
       </view>
-      <view class="people-hint">点头像可改名或删除</view>
+      <view class="people-hint" wx:if="{{!shared}}">点头像可改名或删除</view>
+      <view class="people-hint" wx:else>名单来自分享者，点下方按钮可改用你自己的账单</view>
     </view>
 
     <view class="card">
@@ -57,9 +58,34 @@
           <van-icon class="icon" name="balance-o" size="32rpx" color="#ff9800" />
           <text>费用明细</text>
         </view>
-        <view class="card-add" bindtap="onAddLine" hover-class="card-add-hover">+ 添加</view>
+        <view class="card-add" wx:if="{{!shared}}" bindtap="onAddLine" hover-class="card-add-hover">+ 添加</view>
       </view>
 
+      <!-- 别人的账单：只读展示，不渲染任何输入框和删除按钮 -->
+      <block wx:if="{{shared}}">
+        <view wx:for="{{lineItems}}" wx:key="id" class="line line-static">
+          <view class="line-top">
+            <view class="line-name-row">
+              <image
+                wx:if="{{item.type === 'court'}}"
+                class="line-type-icon"
+                src="/images/icon/net.png"
+                mode="aspectFit"
+              />
+              <image wx:else class="line-type-icon" src="/images/icon/badminton.png" mode="aspectFit" />
+              <text class="line-static-label">{{item.label}}</text>
+            </view>
+            <text wx:if="{{item.type === 'shuttle'}}" class="line-static-sub">¥{{item.unitPrice}} × {{item.qty}} 球</text>
+            <view class="line-static-amount">¥{{item.lineTotal}}</view>
+          </view>
+          <view class="line-static-payer">
+            <image class="line-static-avatar" src="{{item.payerAvatar}}" mode="aspectFill" />
+            <text>{{item.payerName}} 垫付</text>
+          </view>
+        </view>
+      </block>
+
+      <block wx:else>
       <view wx:for="{{lineItems}}" wx:key="id" class="line">
         <view class="line-top">
           <view class="line-name-row">
@@ -142,6 +168,7 @@
           </view>
         </view>
       </view>
+      </block>
     </view>
 
     <view class="card">
@@ -169,7 +196,12 @@
     </view>
   </view>
 
-  <view class="footer-bar">
+  <view class="footer-bar" wx:if="{{shared}}">
+    <button class="footer-btn footer-btn-share" open-type="share">转发</button>
+    <button class="footer-btn footer-btn-save footer-btn-wide" bindtap="onExitShared">我也要算一份</button>
+  </view>
+
+  <view class="footer-bar" wx:else>
     <button class="footer-btn footer-btn-reset" bindtap="onReset">清空</button>
     <button class="footer-btn footer-btn-save" bindtap="onSave">保存</button>
     <button class="footer-btn footer-btn-share" open-type="share">分享</button>

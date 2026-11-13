@@ -1,0 +1,27 @@
+# Caddy 反向代理配置
+#
+# 1. 把第一行换成你自己的已备案域名（只写域名，不要带 https:// 和路径）
+# 2. 证书由 Caddy 自动向 Let's Encrypt 申请并续期，无需额外配置
+# 3. 生效前提：域名 A 记录已指向本机，安全组与 Windows 防火墙放行 80 / 443
+#
+# 前台试跑：caddy.exe run --config Caddyfile
+# 注册服务见 DEPLOY.md 第 8.3 节
+
+api.your-domain.com {
+	encode gzip
+
+	# 后端只监听本机。这里必须写 127.0.0.1 而不是 localhost，
+	# 否则 Windows 上可能先解析到 ::1，导致连接被拒
+	reverse_proxy 127.0.0.1:3000 {
+		header_up X-Real-IP {remote_host}
+	}
+
+	# 访问日志：单文件 10MB 切割，保留 10 份
+	log {
+		output file "C:/apps/badminton/logs/caddy-access.log" {
+			roll_size 10mb
+			roll_keep 10
+		}
+		format console
+	}
+}

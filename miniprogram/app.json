@@ -53,6 +53,7 @@
   "usingComponents": {
     "van-row": "/dist/row/index",
     "van-col": "/dist/col/index",
-    "loading-bar": "/components/loading-bar/index"
+    "loading-bar": "/components/loading-bar/index",
+    "profile-hint": "/components/profile-hint/index"
   }
 }

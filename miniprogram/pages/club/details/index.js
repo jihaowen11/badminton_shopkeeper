@@ -4,6 +4,8 @@ const { pickOpenId } = require('../../../utils/auth')
 const { toText } = require('../../../utils/format')
 const { toStaticUrl, toAvatarUrl } = require('../../../utils/static')
 const { createScrollSync } = require('../../../utils/scrollSync')
+const { requireProfile, isProfileComplete, getCurrentUser } = require('../../../utils/profile')
+const { brandCard, randomShareImage } = require('../../../utils/shareCard')
 
 function toAbbr(text) {
   return toText(text, '俱').slice(0, 1).toUpperCase()
@@ -69,16 +71,6 @@ function hasJoinedClub(openid, members) {
   const oid = toText(openid)
   if (!oid) return false
   return (members || []).some((m) => toText(m && m.userId) === oid)
-}
-
-function isProfileCompleted(userInfo) {
-  const u = userInfo && typeof userInfo === 'object' ? userInfo : {}
-  const nick = toText(u.nickName)
-  const avatar = toText(u.avatar)
-  if (!nick || nick.indexOf('羽球人') === 0) return false
-  if (!avatar) return false
-  if (avatar.indexOf('/images/') === 0) return false
-  return true
 }
 
 function mapClubToView(rawClub, members, openid) {
@@ -276,6 +268,8 @@ Page({
       female: 0,
       isPresident: false,
     },
+    /** 俱乐部拉取失败（分享卡片指向的俱乐部可能已被解散） */
+    loadFailed: false,
     members: [],
   },
 
@@ -299,6 +293,18 @@ Page({
       this.setData({ isShareMode: true })
     }
     this.fetchClubDetail()
+  },
+
+  /**
+   * 从资料页返回时，把上次被资料闸门拦下的「加入俱乐部」自动继续做完。
+   * 用户没保存就直接回来时不重试，避免立刻又弹一次一模一样的提示。
+   */
+  onShow() {
+    if (!this._pendingJoin) return
+    this._pendingJoin = false
+    if (!this.data.isShareMode) return
+    if (!isProfileComplete(getCurrentUser())) return
+    this.onJoinClub()
   },
 
   onTabMembers() {
@@ -394,6 +400,7 @@ Page({
 
   /** 空状态里的"发起第一场球局" */
   onFeedCreateMatch() {
+    if (!requireProfile('发起球局')) return
     wx.navigateTo({ url: `/pages/match/create/index?clubId=${this.data.clubId}` })
   },
 
@@ -606,24 +613,26 @@ Page({
     const openid = pickOpenId()
     const userInfo = (app && app.globalData && app.globalData.userInfo) || {}
     if (!openid) {
+      // 新用户从分享进来时首次登录可能失败，这里补一次重登并自动重试，别让按钮变成死路
+      const app0 = getApp()
+      if (!this._loginRetried && app0 && typeof app0.relogin === 'function') {
+        this._loginRetried = true
+        app0.relogin().then(() => this.onJoinClub())
+        return
+      }
       wx.showToast({ title: '请先登录后再加入', icon: 'none' })
       return
     }
-    if (!isProfileCompleted(userInfo)) {
-      const returnUrl = encodeURIComponent(`/pages/club/details/index?id=${clubId}&mode=share`)
-      wx.showModal({
-        title: '提示',
-        content: '请先完善昵称和头像信息，再加入俱乐部。',
-        confirmText: '去完善',
-        success: (res) => {
-          if (!res.confirm) return
-          wx.navigateTo({
-            url: `/pages/user/info/index?from=clubShareJoin&clubId=${clubId}&returnUrl=${returnUrl}`,
-          })
+    // 资料闸门：头像或昵称任一项完善即可，两项都是默认值才拦。
+    // 记一笔待续动作，用户从资料页回来时自动把加入继续做完
+    if (
+      !requireProfile('加入俱乐部', {
+        onNeed: () => {
+          this._pendingJoin = true
         },
       })
+    )
       return
-    }
     const payload = {
       clubId,
       userId: openid,
@@ -648,12 +657,14 @@ Page({
   },
 
   onShareAppMessage() {
-    const id = this.data.clubId || '1'
-    const randomIndex = Math.floor(Math.random() * 6) + 1
+    const id = this.data.clubId
+    const name = toText(this.data.club && this.data.club.name)
+    // 没有 id 不能兜底成 "1"：那会把好友带进别人的俱乐部
+    if (!id) return brandCard()
     return {
-      title: `邀请你加入「${this.data.club.name}」`,
+      title: name ? `邀请你加入「${name}」` : '邀请你加入我的羽毛球俱乐部',
       path: `/pages/club/details/index?id=${id}&mode=share`,
-      imageUrl: `/images/share/${randomIndex}.jpg`,
+      imageUrl: randomShareImage(),
     }
   },
 
@@ -675,6 +686,7 @@ Page({
           currentUserRole,
           canInvite,
           hasJoined,
+          loadFailed: false,
         })
         // 成员才预取动态：tab 切过去就能直接看到，不用等转圈
         if (hasJoined || currentUserRole === 'owner') {
@@ -684,6 +696,22 @@ Page({
         }
         return ret
       })
-      .catch(() => null)
+      .catch(() => {
+        // 分享卡片可能指向已解散的俱乐部：给明确空态，别停在空白页
+        if (!this.data.club || !this.data.club.name) {
+          this.setData({ loadFailed: true })
+        }
+        return null
+      })
+  },
+
+  /** 空态里的"回到首页"：分享页往往没有上一页，直接切 tab */
+  onBackHome() {
+    wx.switchTab({
+      url: '/pages/index/index',
+      fail: () => {
+        wx.reLaunch({ url: '/pages/index/index' })
+      },
+    })
   },
 })

@@ -1,4 +1,5 @@
 const { STATS_OVERVIEW, TIP_DAILY } = require('../../request/api')
+const { brandCard } = require('../../utils/shareCard')
 
 const TIP_CACHE_KEY = 'tip_daily_cache'
 
@@ -125,5 +126,10 @@ Page({
 
   toCost(){
     wx.navigateTo({url:'/pages/cost/index'})
+  },
+
+  /** 首页是几乎所有分享的落地页，也应能从右上角菜单直接转发出去 */
+  onShareAppMessage() {
+    return brandCard()
   }
 })

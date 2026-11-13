@@ -1,6 +1,7 @@
 // pages/cost/index.js
 
 const { BallSim, sumShuttleQty } = require('./balls.js')
+const { encodeBill, decodeBill } = require('./share.js')
 const { MATCH_ROUNDS_LIST } = require('../../request/api')
 const { whenLoginReady } = require('../../utils/auth')
 const { DEFAULT_AVATAR, toAvatarUrl } = require('../../utils/static')
@@ -112,6 +113,9 @@ Page({
     matchId: '',
     loading: false,
 
+    // 从别人的分享卡片进入：只读展示对方那笔账，不能改、不能存
+    shared: false,
+
     // 结算建议：[{ from, to, amountText }]，全部为 0 时为空数组
     settlements: [],
 
@@ -147,6 +151,21 @@ Page({
     this._ballSim = new BallSim()
     this._heroW = 0
     this._heroH = 0
+
+    // 分享卡片带来的账单优先：这时页面属于"看别人的账"，不读本地草稿
+    const sharedBill = decodeBill(options && options.b)
+    if (sharedBill) {
+      this.setData(
+        {
+          shared: true,
+          participants: sharedBill.participants,
+          lineItems: sharedBill.lineItems,
+        },
+        () => this.recalcAll(),
+      )
+      return
+    }
+
     const matchId = options && options.matchId ? String(options.matchId) : ''
     if (matchId) {
       this.setData({ matchId })
@@ -386,6 +405,7 @@ Page({
       return {
         ...it,
         payerId: p.id || it.payerId,
+        payerName: p.name || '球友',
         lineTotal: fmtMoney(this.lineAmount(it)),
         payerAvatar: p.avatar || DEFAULT_AVATAR,
       }
@@ -456,6 +476,8 @@ Page({
   },
 
   onDeleteLine(e) {
+    if (this.data.shared) return
+
     const id = e.currentTarget.dataset.id
     if (this.data.lineItems.length <= 1) {
       wx.showToast({ title: '至少保留一行', icon: 'none' })
@@ -466,6 +488,8 @@ Page({
   },
 
   onAddLine() {
+    if (this.data.shared) return
+
     wx.showActionSheet({
       itemList: ['添加场地费', '添加球费'],
       success: (res) => {
@@ -504,6 +528,8 @@ Page({
   },
 
   onTapLinePayer(e) {
+    if (this.data.shared) return
+
     const lineId = e.currentTarget.dataset.id
     const names = this.data.participants.map((p) => p.name || '未命名')
     if (!names.length) return
@@ -521,6 +547,8 @@ Page({
   },
 
   onAddParticipant() {
+    if (this.data.shared) return
+
     if (this.data.participants.length >= 20) {
       wx.showToast({ title: '最多添加20人', icon: 'none' })
       return
@@ -540,6 +568,8 @@ Page({
 
   /** 点头像：改名 / 删除。删除后把垫付人重挂到剩下第一个人，避免指向不存在的人 */
   onTapParticipant(e) {
+    if (this.data.shared) return
+
     const id = e.currentTarget.dataset.id
     const p = this.data.participants.find((it) => it.id === id)
     if (!p) return
@@ -593,6 +623,8 @@ Page({
 
   /** 清空重填：丢掉草稿，回到初始状态（从比赛进入的，人员重新按报名名单拉一次） */
   onReset() {
+    if (this.data.shared) return
+
     const inMatch = !!this.data.matchId
     wx.showModal({
       title: '清空重填',
@@ -640,6 +672,8 @@ Page({
   },
 
   onSave() {
+    if (this.data.shared) return
+
     try {
       wx.setStorageSync(this.storageKey(), this.buildPersistPayload())
       wx.showToast({ title: '已保存', icon: 'success' })
@@ -649,10 +683,23 @@ Page({
   },
 
   onShareAppMessage() {
-    const { totalText, avgText } = this.data
+    const { totalText, avgText, participants, lineItems } = this.data
+    // 账单编进路径：否则好友点开只会看到他自己的草稿，卡片金额和行为对不上
+    const bill = encodeBill(participants, lineItems)
+    const hasAmount = totalText !== '0'
     return {
-      title: `费用计算 · 总计¥${totalText} · 人均约¥${avgText}`,
-      path: '/pages/cost/index',
+      title:
+        bill && hasAmount
+          ? `本场球费 ¥${totalText}，人均 ¥${avgText}，点开看谁该给谁`
+          : '球费 AA 一键算清，球友都能用',
+      path: bill ? `/pages/cost/index?b=${bill}` : '/pages/cost/index',
     }
+  },
+
+  /** 从"看别人的账"切回自己填：人员名单保留，金额清空，别把别人的钱算成自己的 */
+  onExitShared() {
+    const lineItems = this.buildDefaultLines()
+    this.setData({ shared: false, lineItems, settlements: [], totalText: '0', avgText: '0' }, () => this.recalcAll())
+    wx.showToast({ title: '人员已保留，填金额即可', icon: 'none' })
   },
 })

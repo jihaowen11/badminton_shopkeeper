@@ -3,6 +3,7 @@ const { CLUB_MY_LIST } = require('../../../request/api')
 const { whenLoginReady, pickOpenId } = require('../../../utils/auth')
 const { toStaticUrl } = require('../../../utils/static')
 const { createScrollSync } = require('../../../utils/scrollSync')
+const { requireProfile } = require('../../../utils/profile')
 
 function toDisplayName(name) {
   const text = name == null ? '' : String(name).trim()
@@ -45,6 +46,7 @@ Page({
   onPageScroll: createScrollSync('clubScrollTop', 30),
 
   onCreate() {
+    if (!requireProfile('创建俱乐部')) return
     wx.navigateTo({ url: '/pages/club/create/index' })
   },
 

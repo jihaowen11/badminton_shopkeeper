@@ -2,6 +2,7 @@ const { CLUB_MY_LIST, USER_STATS } = require('../../request/api')
 const { whenLoginReady, pickOpenId } = require('../../utils/auth')
 const { DEFAULT_AVATAR, toAvatarUrl, toStaticUrl } = require('../../utils/static')
 const { mapRecentMatches, formatStats } = require('../../utils/matchView')
+const { brandCard } = require('../../utils/shareCard')
 
 function formatJoinDate(createdAt) {
   if (createdAt == null || createdAt === '') return ''
@@ -201,20 +202,6 @@ Page({
   },
 
   onShareAppMessage() {
-    const randomIndex = Math.floor(Math.random() * 6) + 1
-    const titles = [
-      '羽球掌柜：一键组局约球，今天就开打！',
-      '还在群里刷屏约球？试试羽球掌柜',
-      '羽球掌柜上线，俱乐部管理和约球更省心',
-      '打球搭子难找？羽球掌柜帮你快速匹配',
-      '从建俱乐部到记比赛，羽球掌柜全搞定',
-      '球友都在用的羽球掌柜，快来一起玩',
-    ]
-    const randomTitle = titles[Math.floor(Math.random() * titles.length)]
-    return {
-      title: randomTitle,
-      path: '/pages/index/index',
-      imageUrl: `/images/share/${randomIndex}.jpg`,
-    }
+    return brandCard()
   },
 })

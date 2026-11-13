@@ -635,3 +635,53 @@ page {
 .footer-share-btn::after {
   border: none;
 }
+
+/* 详情加载失败：分享卡片失效（俱乐部已解散）时的兜底空态 */
+.load-failed {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 64rpx;
+  box-sizing: border-box;
+  background: #ffffff;
+}
+
+.load-failed-title {
+  margin-top: 28rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #12161a;
+}
+
+.load-failed-desc {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  line-height: 38rpx;
+  color: rgba(18, 22, 26, 0.5);
+  text-align: center;
+}
+
+.load-failed-btn {
+  margin-top: 48rpx;
+  min-width: 280rpx;
+  padding: 22rpx 48rpx;
+  box-sizing: border-box;
+  font-size: 28rpx;
+  font-weight: 600;
+  text-align: center;
+  color: #ffffff;
+  background: linear-gradient(180deg, #34c46b 0%, #0a8f3e 100%);
+  border-radius: 999rpx;
+  box-shadow: 0 10rpx 28rpx rgba(10, 143, 62, 0.24);
+}
+
+.load-failed-btn-hover {
+  opacity: 0.86;
+}

@@ -4,6 +4,7 @@ const { whenLoginReady, pickOpenId } = require('../../../utils/auth')
 const { pad2, toText } = require('../../../utils/format')
 const { toAvatarUrl } = require('../../../utils/static')
 const { createScrollSync } = require('../../../utils/scrollSync')
+const { brandCard } = require('../../../utils/shareCard')
 
 function formatDateTime(startTime, createdAt) {
   const raw = startTime || createdAt
@@ -134,9 +135,8 @@ Page({
   },
 
   onShareAppMessage() {
-    return {
-      title: '比赛列表',
-      path: '/pages/match/index/index',
-    }
+    // 这页是「我的比赛」，按 openId 取数据，直接把列表分享出去对方只会看到空列表。
+    // 想让好友看某场球，进详情页分享那一场；这里的转发只作为入口扩散。
+    return brandCard()
   },
 })

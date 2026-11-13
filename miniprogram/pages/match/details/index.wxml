@@ -1,5 +1,12 @@
 <loading-bar />
 <!--pages/match/details/index.wxml-->
+<!-- 分享卡片指向的比赛被删除/取消时，给出明确空态，别让用户对着空白页等 -->
+<view wx:if="{{loadFailed}}" class="load-failed">
+  <van-icon name="warning-o" size="64rpx" color="rgba(217,134,10,0.6)" />
+  <view class="load-failed-title">比赛不存在或已取消</view>
+  <view class="load-failed-desc">这个分享可能已经过期，去看看别的球局吧</view>
+  <view class="load-failed-btn" bindtap="onBackHome" hover-class="load-failed-btn-hover">回到首页</view>
+</view>
 <view class="page">
   <!-- 分享海报：由 JS 按比赛信息绘制 5:4，导出为临时路径供 onShareAppMessage 使用（不可直接用 WXML 转图） -->
   <canvas type="2d" id="sharePosterCanvas" class="share-poster-canvas"></canvas>
