@@ -209,12 +209,33 @@ page {
 }
 
 .people-avatar {
+  position: relative;
   width: 64rpx;
   height: 64rpx;
   border-radius: 50%;
   border: 3rpx solid #fff;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  overflow: hidden;
   flex-shrink: 0;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.people-avatar-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.people-avatar-hover {
+  transform: scale(0.9);
+  opacity: 0.85;
+}
+
+.people-hint {
+  margin-top: 14rpx;
+  font-size: 22rpx;
+  line-height: 1.4;
+  color: rgba(18, 22, 26, 0.38);
 }
 
 .people-add {
@@ -475,27 +496,19 @@ page {
   color: #ffffff;
 }
 
+.footer-btn-reset {
+  flex: 0 0 auto;
+  width: 148rpx;
+  background: #f3f4f6;
+  color: rgba(18, 22, 26, 0.55);
+  border: 2rpx solid rgba(18, 22, 26, 0.1) !important;
+  font-weight: 800;
+}
+
 .footer-btn-share {
   background: #ffffff;
   color: var(--orange);
   border: 2rpx solid rgba(255, 152, 0, 0.55) !important;
-}
-
-/* ===== 比赛来源提示 ===== */
-.match-tip {
-  display: flex;
-  align-items: center;
-  gap: 10rpx;
-  margin: 0 0 20rpx;
-  padding: 18rpx 24rpx;
-  border-radius: 18rpx;
-  background: rgba(10, 143, 62, 0.08);
-}
-
-.match-tip-text {
-  font-size: 24rpx;
-  font-weight: 600;
-  color: rgba(10, 143, 62, 0.9);
 }
 
 /* ===== 结算建议 ===== */

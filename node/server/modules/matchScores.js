@@ -2,8 +2,9 @@ const { DataTypes } = require('sequelize');
 const db = require('../config/db');
 const Sequelize = db.sequelize;
 const matchScores = require('../schema/matchScores')(Sequelize, DataTypes);
+const { safeSync } = require('../utils/safeSync');
 
-matchScores.sync({ force: false });
+safeSync(matchScores, 'matchScores');
 
 class MatchScoreModel {
     static async create(data) {

@@ -1,6 +1,8 @@
 // pages/club/index/index.js
 const { CLUB_MY_LIST } = require('../../../request/api')
 const { whenLoginReady, pickOpenId } = require('../../../utils/auth')
+const { toStaticUrl } = require('../../../utils/static')
+const { createScrollSync } = require('../../../utils/scrollSync')
 
 function toDisplayName(name) {
   const text = name == null ? '' : String(name).trim()
@@ -9,18 +11,6 @@ function toDisplayName(name) {
 
 function toAbbr(name) {
   return toDisplayName(name).slice(0, 1).toUpperCase()
-}
-
-function toAvatarUrl(rawAvatar) {
-  const path = rawAvatar == null ? '' : String(rawAvatar).trim()
-  if (!path) return ''
-  try {
-    const app = getApp()
-    if (app && app.fun && typeof app.fun.joinStaticUrl === 'function') {
-      return app.fun.joinStaticUrl(path)
-    }
-  } catch (e) {}
-  return path
 }
 
 function isOwnerMember(member, clubCreator) {
@@ -40,7 +30,7 @@ function mapClubToView(item, openid, index) {
     address: toDisplayName(club.residence || '未设置常驻地'),
     memberCount: members.length,
     abbr: toAbbr((owner && owner.userName) || club.name),
-    avatarUrl: toAvatarUrl(owner && owner.userAvatar),
+    avatarUrl: toStaticUrl(owner && owner.userAvatar),
     isPresident,
   }
 }
@@ -52,12 +42,7 @@ Page({
     clubs: [],
   },
 
-  onPageScroll(e) {
-    const st = e && typeof e.scrollTop === 'number' ? e.scrollTop : 0
-    if (st !== this.data.clubScrollTop) {
-      this.setData({ clubScrollTop: st })
-    }
-  },
+  onPageScroll: createScrollSync('clubScrollTop', 30),
 
   onCreate() {
     wx.navigateTo({ url: '/pages/club/create/index' })

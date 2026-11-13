@@ -125,7 +125,10 @@ module.exports = function (sequelize, DataTypes) {
         indexes: [
             { name: 'idx_matches_created_by', fields: ['created_by'] },
             { name: 'idx_matches_club_status', fields: ['club_id', 'status'] },
-            { name: 'idx_matches_start_time', fields: ['start_time'] }
+            { name: 'idx_matches_start_time', fields: ['start_time'] },
+            // 垃圾数据回收按「状态 + 时间」扫超期比赛
+            { name: 'idx_matches_status_created', fields: ['status', 'createdAt'] },
+            { name: 'idx_matches_status_updated', fields: ['status', 'updatedAt'] }
         ]
     })
 }

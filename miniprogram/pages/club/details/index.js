@@ -1,41 +1,12 @@
 // pages/club/details/index.js
-const { CLUB_DES, DEL_CLUB, INVITE_CLUB, EXIT_CLUB, SET_ADMIN, REMOVE_ADMIN } = require('../../../request/api')
-
-function pickOpenId() {
-  try {
-    const app = getApp()
-    const gd = (app && app.globalData) || {}
-    return (
-      (gd.openid && String(gd.openid).trim()) ||
-      (gd.userInfo &&
-        (gd.userInfo.openId || gd.userInfo.openid || gd.userInfo.openID) &&
-        String(gd.userInfo.openId || gd.userInfo.openid || gd.userInfo.openID).trim()) ||
-      ''
-    )
-  } catch (e) {
-    return ''
-  }
-}
-
-function toText(v, fallback = '') {
-  const s = v == null ? '' : String(v).trim()
-  return s || fallback
-}
+const { CLUB_DES, DEL_CLUB, INVITE_CLUB, EXIT_CLUB, SET_ADMIN, REMOVE_ADMIN, CLUB_FEED } = require('../../../request/api')
+const { pickOpenId } = require('../../../utils/auth')
+const { toText } = require('../../../utils/format')
+const { toStaticUrl, toAvatarUrl } = require('../../../utils/static')
+const { createScrollSync } = require('../../../utils/scrollSync')
 
 function toAbbr(text) {
   return toText(text, '俱').slice(0, 1).toUpperCase()
-}
-
-function toAvatarUrl(rawAvatar) {
-  const path = rawAvatar == null ? '' : String(rawAvatar).trim()
-  if (!path) return ''
-  try {
-    const app = getApp()
-    if (app && app.fun && typeof app.fun.joinStaticUrl === 'function') {
-      return app.fun.joinStaticUrl(path)
-    }
-  } catch (e) {}
-  return path
 }
 
 function formatCreateMonth(createdAt) {
@@ -66,7 +37,7 @@ function mapMembersToView(rawMembers) {
       userId: toText((m && m.userId) || user.openId),
       name,
       abbr: toAbbr(name),
-      avatarUrl: toAvatarUrl(user.avatar || (m && m.userAvatar)),
+      avatarUrl: toStaticUrl(user.avatar || (m && m.userAvatar)),
       roleType: role.roleType,
       roleText: role.roleText,
       gender,
@@ -131,6 +102,147 @@ function mapClubToView(rawClub, members, openid) {
   }
 }
 
+/* ==================== 动态（自动流）展示 ==================== */
+
+/** 后端返回 ISO 时间，这里统一成本地 Date，兼容秒级时间戳 */
+function parseFeedTime(value) {
+  if (value == null || value === '') return null
+  if (typeof value === 'number') return new Date(value < 1e12 ? value * 1000 : value)
+  const d = new Date(value)
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
+function hhmm(d) {
+  const h = d.getHours()
+  const m = d.getMinutes()
+  return `${h < 10 ? `0${h}` : h}:${m < 10 ? `0${m}` : m}`
+}
+
+/**
+ * 动态时间文案：越近越口语，越远越具体
+ * 刚刚 / 12 分钟前 / 3 小时前 / 昨天 19:30 / 11月8日 / 2025年12月1日
+ */
+function formatFeedTime(value, now) {
+  const d = parseFeedTime(value)
+  if (!d) return ''
+  const base = now instanceof Date ? now : new Date()
+  const diff = base.getTime() - d.getTime()
+  if (diff < 0) return '刚刚'
+  if (diff < 60 * 1000) return '刚刚'
+  if (diff < 60 * 60 * 1000) return `${Math.floor(diff / 60000)} 分钟前`
+
+  const sameDay =
+    d.getFullYear() === base.getFullYear() &&
+    d.getMonth() === base.getMonth() &&
+    d.getDate() === base.getDate()
+  if (sameDay) return `${Math.floor(diff / 3600000)} 小时前`
+
+  const yesterday = new Date(base.getTime() - 86400000)
+  const isYesterday =
+    d.getFullYear() === yesterday.getFullYear() &&
+    d.getMonth() === yesterday.getMonth() &&
+    d.getDate() === yesterday.getDate()
+  if (isYesterday) return `昨天 ${hhmm(d)}`
+
+  if (d.getFullYear() === base.getFullYear()) return `${d.getMonth() + 1}月${d.getDate()}日`
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`
+}
+
+/** 比赛开赛时间：今天 19:00 / 明天 19:00 / 11月15日 19:00 */
+function formatStartTime(value, now) {
+  const d = parseFeedTime(value)
+  if (!d) return ''
+  const base = now instanceof Date ? now : new Date()
+  const dayDiff = Math.round(
+    (new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() -
+      new Date(base.getFullYear(), base.getMonth(), base.getDate()).getTime()) /
+      86400000
+  )
+  if (dayDiff === 0) return `今天 ${hhmm(d)}`
+  if (dayDiff === 1) return `明天 ${hhmm(d)}`
+  return `${d.getMonth() + 1}月${d.getDate()}日 ${hhmm(d)}`
+}
+
+/** 把接口返回的一条动态转成可直接渲染的结构 */
+function mapFeedItemToView(raw, now) {
+  const item = raw && typeof raw === 'object' ? raw : {}
+  const type = toText(item.type)
+  const timeText = formatFeedTime(item.at, now)
+
+  if (type === 'member_join' || type === 'member_batch') {
+    const members = Array.isArray(item.members) ? item.members : []
+    const first = members[0] || {}
+    const names = members.map((m) => toText(m && m.name)).filter(Boolean)
+    let title = ''
+    if (names.length === 0) title = '新成员加入了俱乐部'
+    else if (names.length === 1) title = `${names[0]} 加入了俱乐部`
+    else title = `${names[0]} 等 ${names.length} 人加入了俱乐部`
+    return {
+      id: toText(item.id),
+      type: 'join',
+      tone: 'orange',
+      icon: 'friends-o',
+      title,
+      desc: '',
+      timeText,
+      tagText: '新成员',
+      matchId: '',
+      memberOpenId: names.length === 1 ? toText(first.openId) : '',
+      avatars: members.slice(0, 3).map((m) => toAvatarUrl(m && m.avatar)),
+    }
+  }
+
+  const match = item.match && typeof item.match === 'object' ? item.match : {}
+  const matchName = toText(match.name, '未命名比赛')
+  const actorName = toText(item.actor && item.actor.name, '有人')
+  const matchId = match.id != null ? String(match.id) : ''
+
+  if (type === 'match_finish') {
+    const finished = Number(match.finishedMatches) || 0
+    const champ = match.champion && toText(match.champion.name)
+    const parts = []
+    if (finished > 0) parts.push(`${finished} 场对阵`)
+    // 只打了一两场就叫人"冠军"没意义，4 场以上才展示
+    if (champ && finished >= 4) parts.push(`冠军 ${champ}`)
+    return {
+      id: toText(item.id),
+      type: 'finish',
+      tone: 'blue',
+      icon: 'flag-o',
+      title: `「${matchName}」打完了`,
+      desc: parts.join(' · '),
+      timeText,
+      tagText: '比赛结束',
+      matchId,
+      memberOpenId: '',
+      avatars: champ && finished >= 4 ? [toAvatarUrl(match.champion.avatar)] : [],
+    }
+  }
+
+  // match_create
+  const meta = []
+  const playerCount = Number(match.playerCount) || 0
+  if (playerCount > 0) meta.push(`${playerCount} 人`)
+  const startText = formatStartTime(match.startTime, now)
+  if (startText) meta.push(startText)
+  const address = toText(match.address)
+  if (address) meta.push(address)
+
+  return {
+    id: toText(item.id),
+    type: 'create',
+    tone: 'green',
+    icon: 'add-o',
+    title: `${actorName} 发起了比赛`,
+    desc: [`「${matchName}」`, meta.join(' · ')].filter(Boolean).join('  '),
+    timeText,
+    tagText: '发起比赛',
+    matchId,
+    memberOpenId: '',
+    avatars: [toAvatarUrl(item.actor && item.actor.avatar)],
+  }
+}
+
 Page({
   data: {
     clubId: '',
@@ -139,6 +251,14 @@ Page({
     activeTab: 'members',
     memberCount: 0,
     feedCount: 0,
+    /** 动态列表相关（懒加载：切到动态 tab 才请求） */
+    feedList: [],
+    feedLoaded: false,
+    feedLoading: false,
+    feedHasMore: false,
+    feedCursor: '',
+    feedNeedJoin: false,
+    feedError: '',
     currentUserRole: 'member',
     canInvite: false,
     isShareMode: false,
@@ -187,14 +307,102 @@ Page({
 
   onTabFeed() {
     this.setData({ activeTab: 'feed', membersScrollTop: 0 })
-  },
-
-  onPageScroll(e) {
-    const st = e && typeof e.scrollTop === 'number' ? e.scrollTop : 0
-    if (st !== this.data.membersScrollTop) {
-      this.setData({ membersScrollTop: st })
+    // 没加载过就拉一页；已加载则静默刷新，保证切回来能看到最新动态
+    if (!this.data.feedLoaded) {
+      this.fetchFeed(true)
+    } else if (!this.data.feedLoading) {
+      this.fetchFeed(true, { silent: true })
     }
   },
+
+  /**
+   * 拉取动态
+   * @param {boolean} reset 是否从第一页重新开始
+   * @param {{silent?: boolean}} options silent=true 时不显示加载态（后台刷新用）
+   */
+  fetchFeed(reset, options) {
+    const clubId = Number(this.data.clubId)
+    if (!clubId) return Promise.resolve(null)
+    const silent = !!(options && options.silent)
+
+    // 非成员（分享模式）看不到动态，直接给提示，避免打一次必然 403 的请求
+    if (!this.data.hasJoined && !this.data.club.isPresident) {
+      this.setData({ feedNeedJoin: true, feedLoaded: true, feedList: [] })
+      return Promise.resolve(null)
+    }
+    if (this.data.feedLoading) return Promise.resolve(null)
+
+    const cursor = reset ? '' : toText(this.data.feedCursor)
+    if (!reset && !cursor) return Promise.resolve(null)
+
+    const patch = { feedLoading: true, feedError: '', feedNeedJoin: false }
+    if (reset) {
+      patch.feedList = []
+      patch.feedCursor = ''
+    }
+    this.setData(patch)
+
+    const payload = { clubId, pageSize: 20 }
+    if (cursor) payload.cursor = cursor
+
+    return CLUB_FEED(payload)
+      .then((ret) => {
+        const payloadData = ret && typeof ret === 'object' ? ret : {}
+        const rows = Array.isArray(payloadData.list) ? payloadData.list : []
+        const now = new Date()
+        const mapped = rows.map((row) => mapFeedItemToView(row, now)).filter((row) => !!row.id)
+        const list = reset ? mapped : this.data.feedList.concat(mapped)
+        this.setData({
+          feedList: list,
+          feedLoaded: true,
+          feedLoading: false,
+          feedHasMore: !!payloadData.hasMore,
+          feedCursor: toText(payloadData.nextCursor),
+          feedCount: Number(payloadData.total) || list.length,
+        })
+      })
+      .catch(() => {
+        const patch = { feedLoading: false }
+        if (!silent) {
+          patch.feedLoaded = true
+          patch.feedError = '动态加载失败，下拉重试'
+        }
+        // 静默预取失败就保持"未加载"，切到动态 tab 时会再请求一次
+        this.setData(patch)
+      })
+  },
+
+  onReachBottom() {
+    if (this.data.activeTab !== 'feed') return
+    if (!this.data.feedHasMore || this.data.feedLoading) return
+    this.fetchFeed(false)
+  },
+
+  /** 点动态卡片：比赛类跳比赛详情，成员类跳个人资料 */
+  onTapFeed(e) {
+    const ds = e.currentTarget.dataset || {}
+    const matchId = toText(ds.matchId)
+    if (matchId) {
+      wx.navigateTo({ url: `/pages/match/details/index?id=${matchId}` })
+      return
+    }
+    const openId = toText(ds.memberOpenId)
+    if (openId) {
+      wx.navigateTo({ url: `/pages/user/person/index?openId=${encodeURIComponent(openId)}` })
+    }
+  },
+
+  /** 空状态里的"发起第一场球局" */
+  onFeedCreateMatch() {
+    wx.navigateTo({ url: `/pages/match/create/index?clubId=${this.data.clubId}` })
+  },
+
+  /** 加载失败后重试 */
+  onFeedRetry() {
+    this.fetchFeed(true)
+  },
+
+  onPageScroll: createScrollSync('membersScrollTop', 10),
 
   onMemberMore(e) {
     const id = e.currentTarget.dataset.id
@@ -468,6 +676,12 @@ Page({
           canInvite,
           hasJoined,
         })
+        // 成员才预取动态：tab 切过去就能直接看到，不用等转圈
+        if (hasJoined || currentUserRole === 'owner') {
+          this.fetchFeed(true, { silent: true })
+        } else {
+          this.setData({ feedNeedJoin: true, feedLoaded: true })
+        }
         return ret
       })
       .catch(() => null)

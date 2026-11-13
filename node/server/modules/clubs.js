@@ -4,8 +4,9 @@ const Sequelize = db.sequelize;
 const clubs = require('../schema/clubs')(Sequelize, DataTypes);
 const UserModel = require('./users');
 const ClubMemberModel = require('./clubMembers');
+const { safeSync } = require('../utils/safeSync');
 
-clubs.sync({ force: false });
+safeSync(clubs, 'clubs');
 
 /** 成员行 + users 表关联资料（club_members.user_id = users.open_id） */
 async function membersPlainWithUserProfiles(memberInstances) {

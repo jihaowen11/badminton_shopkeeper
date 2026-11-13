@@ -1,4 +1,6 @@
 const ClubModel = require("../modules/clubs");
+const ClubMemberModel = require("../modules/clubMembers");
+const ClubFeedModel = require("../modules/clubFeed");
 const R = require("../utils/responseBeautifier")
 
 /** 当前登录用户（由 auth 中间件写入） */
@@ -99,6 +101,53 @@ class ClubController {
         try {
             const list = await ClubModel.listMineByOpenId(openId);
             ctx.body = R.set(list, 200);
+        } catch (err) {
+            ctx.body = R.error(412, err);
+        }
+    }
+
+    /**
+     * 俱乐部动态（自动流）
+     * body: { clubId, cursor?, pageSize? }
+     *
+     * 只允许俱乐部成员（或会长）查看。分享模式下的非成员会收到 403，
+     * 前端据此展示"加入后可查看"。
+     */
+    static async feed(ctx) {
+        const req = ctx.request.body || {};
+        const openId = currentOpenId(ctx);
+        if (!openId) {
+            ctx.body = R.error(401);
+            return;
+        }
+        const clubId = Number(req.clubId || req.id);
+        if (!clubId) {
+            ctx.body = R.error(416);
+            return;
+        }
+        try {
+            const club = plain(await ClubModel.detail(clubId));
+            if (!club) {
+                ctx.body = R.error(412, '俱乐部不存在');
+                return;
+            }
+            const isCreator = String(club.creator || '') === openId;
+            let isMember = false;
+            if (!isCreator) {
+                const member = plain(await ClubMemberModel.detailByClubUser(clubId, openId));
+                // status: 0待审核 1正常 2禁用 3退出，只有正常的成员能看
+                isMember = !!member && (member.status == null || Number(member.status) === 1);
+            }
+            if (!isCreator && !isMember) {
+                ctx.body = R.error(403, '加入俱乐部后可查看动态');
+                return;
+            }
+
+            const result = await ClubFeedModel.page(clubId, {
+                cursor: req.cursor,
+                pageSize: req.pageSize,
+            });
+            ctx.body = R.set(result, 200);
         } catch (err) {
             ctx.body = R.error(412, err);
         }

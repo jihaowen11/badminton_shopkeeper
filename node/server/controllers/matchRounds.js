@@ -18,6 +18,31 @@ function currentOpenId(ctx) {
     return ctx && ctx.state && ctx.state.openId ? String(ctx.state.openId).trim() : '';
 }
 
+/**
+ * 比赛结束/取消后比分就锁死了。
+ * 前端判的是「结束后不再允许修改比分」，这里必须真的拦住，
+ * 否则直接调接口仍能改，排名也能被追溯篡改。
+ */
+function lockReason(match) {
+    const status = Number(match && match.status);
+    if (status === 3) return '比赛已结束，比分不能再修改';
+    if (status === 5) return '比赛已取消，比分不能再修改';
+    return '';
+}
+
+/**
+ * 谁可以动这一场的比分：比赛组织者，或该场四名球员之一。
+ * 录分和撤销共用同一套判断，避免「能改不能撤」的割裂——
+ * 现场记错分又找不到组织者是高频场景。
+ */
+function canTouchRound(match, round, openId) {
+    const me = str(openId);
+    if (!me || !round) return false;
+    if (str(match && match.createdBy) === me) return true;
+    const quad = [round.team1P1, round.team1P2, round.team2P1, round.team2P2].map(str);
+    return quad.indexOf(me) !== -1;
+}
+
 /** 参赛者 openId 列表 + 展示信息（昵称/头像以 users 表为准，回落到报名快照） */
 async function loadPlayers(matchId) {
     const partRows = await MatchParticipantModel.listByMatchIds([matchId]);
@@ -44,7 +69,8 @@ async function loadPlayers(matchId) {
 class MatchRoundController {
     /**
      * 生成排期
-     * body: { matchId, rounds?, force? }
+     * body: { matchId, rounds?, courts?, force? }
+     *   courts 场地片数，默认 1；上限 floor(报名人数/4)
      */
     static async generate(ctx) {
         const req = ctx.request.body || {};
@@ -83,23 +109,29 @@ class MatchRoundController {
                 return;
             }
 
-            // 轮数：优先用请求参数；否则由"计划场次 ÷ 计划场地数"推出。
-            // 这里必须用计划人数算场地数，不能用实际报名人数——
-            // 比如计划 8 人 14 场（2 片场 7 轮），实际只来了 6 人，
-            // 用实际人数（1 片场）去除会得到 14 轮，明显不合理。
-            const courts = Math.floor(players.length / 4);
+            // 场地片数：默认 1 片（大多数业余局只有一片场），组织者可以改。
+            // 上限是人数能凑满的片数，否则会排出空场。
+            const maxCourts = Math.max(1, Math.floor(players.length / 4));
+            const askedCourts = toInt(req.courts);
+            const courts = Math.min(
+                maxCourts,
+                Math.max(1, askedCourts && askedCourts > 0 ? askedCourts : 1)
+            );
+
+            // 轮数：优先用请求参数；否则由"计划场次 ÷ 场地片数"推出。
+            // 计划场次是比赛创建时填的总场次（与场地数无关），所以这里除以
+            // 本次实际使用的片数即可，不能再按人数反推场地数。
             let roundCount = toInt(req.rounds);
             if (!roundCount) {
                 const sessions = toInt(match.sessionCount);
-                const plannedCount = toInt(match.playerCount) || players.length;
-                const plannedCourts = Math.max(1, Math.floor(plannedCount / 4));
-                roundCount = sessions ? Math.ceil(sessions / plannedCourts) : null;
+                roundCount = sessions ? Math.ceil(sessions / courts) : null;
             }
 
             const result = await MatchRoundModel.generate(
                 matchId,
                 players.map((p) => p.openId),
-                roundCount || undefined
+                roundCount || undefined,
+                courts
             );
 
             // 生成排期即视为开赛，把"报名中"推进到"进行中"
@@ -264,9 +296,13 @@ class MatchRoundController {
             }
             const match = matchRow.get({ plain: true });
 
-            const quad = [thisRound.team1P1, thisRound.team1P2, thisRound.team2P1, thisRound.team2P2].map(str);
-            const allowed = str(match.createdBy) === openId || quad.indexOf(openId) !== -1;
-            if (!allowed) {
+            const locked = lockReason(match);
+            if (locked) {
+                ctx.body = R.error(412, locked);
+                return;
+            }
+
+            if (!canTouchRound(match, thisRound, openId)) {
                 ctx.body = R.error(403, '只有组织者或本场参赛者可以录入比分');
                 return;
             }
@@ -306,8 +342,13 @@ class MatchRoundController {
                 return;
             }
             const match = matchRow.get({ plain: true });
-            if (str(match.createdBy) !== openId) {
-                ctx.body = R.error(403, '只有组织者可以撤销比分');
+            if (!canTouchRound(match, thisRound, openId)) {
+                ctx.body = R.error(403, '只有组织者或本场参赛者可以撤销比分');
+                return;
+            }
+            const locked = lockReason(match);
+            if (locked) {
+                ctx.body = R.error(412, locked);
                 return;
             }
             const updated = await MatchRoundModel.clearScore(roundId);
@@ -337,6 +378,11 @@ class MatchRoundController {
             const match = matchRow.get({ plain: true });
             if (str(match.createdBy) !== openId) {
                 ctx.body = R.error(403, '只有组织者可以清空排期');
+                return;
+            }
+            const locked = lockReason(match);
+            if (locked) {
+                ctx.body = R.error(412, '比赛结束后不能再清空排期');
                 return;
             }
             const deleted = await MatchRoundModel.deleteByMatchId(matchId);

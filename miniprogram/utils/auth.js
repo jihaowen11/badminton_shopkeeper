@@ -31,21 +31,7 @@ function pickOpenId() {
   }
 }
 
-/** 头像等静态资源转完整地址 */
-function toStaticUrl(rawPath) {
-  const p = rawPath == null ? '' : String(rawPath).trim()
-  if (!p) return ''
-  try {
-    const app = getApp()
-    if (app && app.fun && typeof app.fun.joinStaticUrl === 'function') {
-      return app.fun.joinStaticUrl(p)
-    }
-  } catch (e) {}
-  return p
-}
-
 module.exports = {
   whenLoginReady,
   pickOpenId,
-  toStaticUrl,
 }

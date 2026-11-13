@@ -1,6 +1,7 @@
 // pages/club/create/index.js
 
 const { CREATE_CLUB } = require('../../../request/api')
+const { createScrollSync } = require('../../../utils/scrollSync')
 
 Page({
   data: {
@@ -23,12 +24,7 @@ Page({
     tempLocation: '',
   },
 
-  onPageScroll(e) {
-    const st = e && typeof e.scrollTop === 'number' ? e.scrollTop : 0
-    if (st !== this.data.membersScrollTop) {
-      this.setData({ membersScrollTop: st })
-    }
-  },
+  onPageScroll: createScrollSync('membersScrollTop', 10),
 
   onNameInput(e) {
     const v = (e.detail.value || '').slice(0, this.data.nameMax)

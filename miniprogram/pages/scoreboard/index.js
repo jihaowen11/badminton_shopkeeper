@@ -1,11 +1,9 @@
 // pages/scoreboard/index.js
 const { MATCH_ROUNDS_LIST, MATCH_ROUNDS_SUBMIT_SCORE } = require('../../request/api')
+const { pad2 } = require('../../utils/format')
+const { createScrollSync } = require('../../utils/scrollSync')
 
 const STORAGE_KEY = 'scoreboard_records'
-
-function pad2(n) {
-  return String(n).padStart(2, '0')
-}
 
 function nowText() {
   const d = new Date()
@@ -135,12 +133,7 @@ Page({
       })
   },
 
-  onPageScroll(e) {
-    const st = e && typeof e.scrollTop === 'number' ? e.scrollTop : 0
-    if (st !== this.data.pageScrollTop) {
-      this.setData({ pageScrollTop: st })
-    }
-  },
+  onPageScroll: createScrollSync('pageScrollTop', 10),
 
   refreshTexts() {
     this.setData({

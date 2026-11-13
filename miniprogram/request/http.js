@@ -171,7 +171,8 @@ function postRequest(url, data, options) {
 }
 
 //get 请求
-function getRequest(url, data) {
+function getRequest(url, data, options) {
+  const opts = options && typeof options === 'object' ? Object.assign({}, options) : {}
   bus.start()
   const gate = needToken(url) ? waitLogin() : Promise.resolve(null)
 
@@ -190,6 +191,15 @@ function getRequest(url, data) {
             const parsed = parseBody(res.data)
             if (res.statusCode === 200 && parsed.ok) {
               resolve(parsed.object)
+              return
+            }
+            // 与 POST 保持一致：令牌失效时静默重登并重试一次
+            if ((parsed.unauthorized || res.statusCode === 401) && !opts._retried) {
+              opts._retried = true
+              relogin()
+                .then(() => getRequest(url, data, opts))
+                .then(resolve)
+                .catch(reject)
               return
             }
             if (parsed.hasBody) {

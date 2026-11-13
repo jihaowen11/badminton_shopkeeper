@@ -215,6 +215,11 @@ class MatchController {
             }
 
             const result = await MatchModel.inviteClubMembers(clubId, matchId, openIds);
+            // 一个人都没加进去、且原因是名额满了，就别说"邀请成功"
+            if (!result.created.length && result.skipped.some((x) => x.reason === '名额已满')) {
+                ctx.body = R.error(412, "报名名额已满");
+                return;
+            }
             ctx.body = R.set(result, 200, "邀请成功");
         } catch (err) {
             ctx.body = R.error(412, err);

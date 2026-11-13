@@ -35,7 +35,7 @@
     <view wx:for="{{clubs}}" wx:key="id" class="club-card" data-id="{{item.id}}" bindtap="onTapClub" hover-class="club-card-hover">
       <view class="club-avatar-wrap">
         <view class="club-avatar">
-          <image wx:if="{{item.avatarUrl}}" class="club-avatar-img" src="{{item.avatarUrl}}" mode="aspectFill" />
+          <image wx:if="{{item.avatarUrl}}" class="club-avatar-img" src="{{item.avatarUrl}}" mode="aspectFill" lazy-load />
           <text wx:else>{{item.abbr}}</text>
         </view>
         <view wx:if="{{item.isPresident}}" class="club-crown">

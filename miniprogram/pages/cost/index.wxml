@@ -25,10 +25,6 @@
 
   <view class="sheet">
     <view class="sheet-inner">
-    <view wx:if="{{fromMatch}}" class="match-tip">
-      <van-icon name="records" size="28rpx" color="#0a8f3e" />
-      <text class="match-tip-text">人员来自比赛报名名单{{matchTitle ? '：' + matchTitle : ''}}</text>
-    </view>
     <view class="card">
       <view class="card-head">
         <view class="card-title">
@@ -39,16 +35,20 @@
       </view>
       <view class="people-row">
         <view class="people-avatars">
-          <image
+          <view
             wx:for="{{participants}}"
             wx:key="id"
             class="people-avatar"
-            src="{{item.avatar}}"
-            mode="aspectFill"
-          />
+            data-id="{{item.id}}"
+            bindtap="onTapParticipant"
+            hover-class="people-avatar-hover"
+          >
+            <image class="people-avatar-img" src="{{item.avatar}}" mode="aspectFill" />
+          </view>
         </view>
         <view class="people-add" bindtap="onAddParticipant" hover-class="people-add-hover">+ 人员</view>
       </view>
+      <view class="people-hint">点头像可改名或删除</view>
     </view>
 
     <view class="card">
@@ -170,6 +170,7 @@
   </view>
 
   <view class="footer-bar">
+    <button class="footer-btn footer-btn-reset" bindtap="onReset">清空</button>
     <button class="footer-btn footer-btn-save" bindtap="onSave">保存</button>
     <button class="footer-btn footer-btn-share" open-type="share">分享</button>
   </view>

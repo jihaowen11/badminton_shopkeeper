@@ -18,6 +18,9 @@ router.post('/list', ClubController.list)
 //我的俱乐部列表（含成员）：body.openId / openid
 router.post('/myList', ClubController.myList)
 
+//俱乐部动态（自动流，仅成员可见）：body.clubId / cursor / pageSize
+router.post('/feed', ClubController.feed)
+
 //删除俱乐部
 router.post('/delete', ClubController.delete)
 

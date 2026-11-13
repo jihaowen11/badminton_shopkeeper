@@ -48,7 +48,7 @@
 
       <view class="match-row match-row-bottom">
         <view class="org">
-          <image class="org-avatar" mode="aspectFill" src="{{item.orgAvatar}}" />
+          <image class="org-avatar" mode="aspectFill" lazy-load src="{{item.orgAvatar}}" />
           <text class="match-row-text">{{item.orgText}}</text>
         </view>
       </view>
@@ -62,6 +62,7 @@
             class="stack-avatar"
             style="z-index: {{20 - index}}"
             mode="aspectFill"
+            lazy-load
             src="{{a}}"
           />
         </view>

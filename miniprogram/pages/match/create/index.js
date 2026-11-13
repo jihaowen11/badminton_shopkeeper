@@ -1,10 +1,8 @@
 // pages/match/create/index.js
 const { CLUB_MY_LIST, CREATE_MATCH } = require('../../../request/api')
 const { whenLoginReady, pickOpenId } = require('../../../utils/auth')
-
-function pad2(n) {
-  return String(n).padStart(2, '0')
-}
+const { pad2, toText } = require('../../../utils/format')
+const { createScrollSync } = require('../../../utils/scrollSync')
 
 function todayYmd() {
   const d = new Date()
@@ -108,17 +106,15 @@ Page({
     clubText: '',
   },
 
-  onLoad() {
+  onLoad(options) {
+    // 从俱乐部动态的空状态进来时会带 clubId，默认选中该俱乐部
+    const preset = options && options.clubId != null ? String(options.clubId).trim() : ''
+    this._presetClubId = preset
     this.syncDefaultName()
     this.fetchMyClubs()
   },
 
-  onPageScroll(e) {
-    const st = e && typeof e.scrollTop === 'number' ? e.scrollTop : 0
-    if (st !== this.data.pageScrollTop) {
-      this.setData({ pageScrollTop: st })
-    }
-  },
+  onPageScroll: createScrollSync('pageScrollTop', 10),
 
   getTypeTitle() {
     const idx = this.data.selectedTypeIndex
@@ -236,12 +232,17 @@ Page({
       .then((list) => {
         const clubOptions = mapMyClubOptions(list)
         const clubPickerNames = ['不关联俱乐部'].concat(clubOptions.map((c) => c.name))
+        const presetId = toText(this._presetClubId)
+        const presetIndex = presetId
+          ? clubOptions.findIndex((c) => toText(c.id) === presetId)
+          : -1
+        const selected = presetIndex >= 0 ? clubOptions[presetIndex] : null
         this.setData({
           clubOptions,
           clubPickerNames,
-          clubPickerIndex: 0,
-          clubId: '',
-          clubText: '',
+          clubPickerIndex: selected ? presetIndex + 1 : 0,
+          clubId: selected ? selected.id : '',
+          clubText: selected ? selected.name : '',
         })
         return clubOptions
       })

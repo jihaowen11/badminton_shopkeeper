@@ -54,23 +54,20 @@ app.use(async (ctx, next) => {
 
 // middlewares
 app.use(bodyparser({
-  enableTypes:['json', 'form', 'text']
+  enableTypes:['json', 'form', 'text'],
+  // 接口只收轻量 JSON（openIds 数组、金额之类），没必要放开默认 1MB
+  jsonLimit: '256kb',
+  formLimit: '256kb',
+  textLimit: '256kb',
 }))
 app.use(json())
+// 请求日志由 koa-logger 统一输出（含状态码与耗时），不再叠加一份自定义计时日志
 app.use(logger())
 app.use(require('koa-static')(__dirname + '/public'))
 
 app.use(views(__dirname + '/views', {
   extension: 'pug'
 }))
-
-// logger
-app.use(async (ctx, next) => {
-  const start = new Date()
-  await next()
-  const ms = new Date() - start
-  console.log(`${ctx.method} ${ctx.url} - ${ms}ms`)
-})
 
 // 登录态：解析令牌写入 ctx.state.openId，需要身份的接口在此拦截
 app.use(auth())

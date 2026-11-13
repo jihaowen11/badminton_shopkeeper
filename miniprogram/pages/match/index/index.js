@@ -1,30 +1,9 @@
 // pages/match/index/index.js
 const { MATCH_LIST, MATCH_INCREMENT_VIEWS } = require('../../../request/api')
 const { whenLoginReady, pickOpenId } = require('../../../utils/auth')
-
-const DEFAULT_AVATAR = '/images/noheader.jpg'
-
-function pad2(n) {
-  return String(n).padStart(2, '0')
-}
-
-function toText(v, fallback = '') {
-  const s = v == null ? '' : String(v).trim()
-  return s || fallback
-}
-
-
-function toAvatarUrl(rawAvatar) {
-  const path = rawAvatar == null ? '' : String(rawAvatar).trim()
-  if (!path) return DEFAULT_AVATAR
-  try {
-    const app = getApp()
-    if (app && app.fun && typeof app.fun.joinStaticUrl === 'function') {
-      return app.fun.joinStaticUrl(path)
-    }
-  } catch (e) {}
-  return path || DEFAULT_AVATAR
-}
+const { pad2, toText } = require('../../../utils/format')
+const { toAvatarUrl } = require('../../../utils/static')
+const { createScrollSync } = require('../../../utils/scrollSync')
 
 function formatDateTime(startTime, createdAt) {
   const raw = startTime || createdAt
@@ -38,13 +17,16 @@ function formatDateTime(startTime, createdAt) {
   }
 }
 
+/**
+ * 状态 → 角标文案 + 配色键
+ * 配色键对应 index.wxss 里的 .ribbon--*（报名中绿 / 进行中蓝 / 已结束灰 / 中断橙 / 已取消红）
+ */
 function mapStatus(status) {
   const s = Number(status)
-  if (s === 1) return { status: 'open', statusText: '报名中' }
-  if (s === 2) return { status: 'open', statusText: '进行中' }
-  if (s === 3) return { status: 'done', statusText: '已结束' }
-  if (s === 4) return { status: 'done', statusText: '中断' }
-  if (s === 5) return { status: 'done', statusText: '已取消' }
+  if (s === 2) return { status: 'playing', statusText: '进行中' }
+  if (s === 3) return { status: 'end', statusText: '已结束' }
+  if (s === 4) return { status: 'interrupted', statusText: '中断' }
+  if (s === 5) return { status: 'cancelled', statusText: '已取消' }
   return { status: 'open', statusText: '报名中' }
 }
 
@@ -100,12 +82,7 @@ Page({
     this.fetchMatches(this.data.filterLimit)
   },
 
-  onPageScroll(e) {
-    const st = e && typeof e.scrollTop === 'number' ? e.scrollTop : 0
-    if (st !== this.data.pageScrollTop) {
-      this.setData({ pageScrollTop: st })
-    }
-  },
+  onPageScroll: createScrollSync('pageScrollTop', 30),
 
   /** 我的比赛：等服务端登录就绪后再拉取，身份由令牌决定 */
   fetchMatches(pageSize) {

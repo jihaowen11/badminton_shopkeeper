@@ -3,8 +3,9 @@ const db = require('../config/db');
 const Sequelize = db.sequelize;
 const matchRounds = require('../schema/matchRounds')(Sequelize, DataTypes);
 const { generateRotation } = require('../utils/rotation');
+const { safeSync } = require('../utils/safeSync');
 
-matchRounds.sync({ force: false });
+safeSync(matchRounds, 'matchRounds');
 
 /** 把四列 openId 摊平成数组，方便统一处理 */
 function quadOf(row) {
@@ -52,11 +53,13 @@ class MatchRoundModel {
      * @param {number} matchId
      * @param {string[]} players 参赛者 openId
      * @param {number} roundCount 轮数
+     * @param {number} courts 场地片数，不传按 1 片
      * @returns {Promise<{ courts: number, rounds: number, stats: object, replaced: number }>}
      */
-    static async generate(matchId, players, roundCount) {
+    static async generate(matchId, players, roundCount, courts) {
         const result = generateRotation(players, {
             rounds: roundCount,
+            courts,
             // 用比赛 id 当种子的一部分，同一场比赛重排结果稳定可复现
             seed: Number(matchId) * 7919 + players.length,
         });

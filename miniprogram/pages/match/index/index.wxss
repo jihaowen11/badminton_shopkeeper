@@ -108,12 +108,30 @@ page {
   box-shadow: 0 10rpx 20rpx rgba(0, 0, 0, 0.12);
 }
 
+/* 状态角标：一个状态一个颜色，扫一眼就能分辨 */
 .ribbon--open {
-  background: rgba(10, 143, 62, 0.78);
+  /* 报名中：绿，表示还能加入 */
+  background: #0a8f3e;
 }
 
-.ribbon--done {
-  background: rgba(143, 152, 161, 0.86);
+.ribbon--playing {
+  /* 进行中：蓝，表示正在打 */
+  background: #1677ff;
+}
+
+.ribbon--end {
+  /* 已结束：灰，降低存在感 */
+  background: #8a929b;
+}
+
+.ribbon--interrupted {
+  /* 中断：橙，属于异常但非终态 */
+  background: #d9860a;
+}
+
+.ribbon--cancelled {
+  /* 已取消：红，最需要注意 */
+  background: #d04343;
 }
 
 .match-title {
@@ -122,6 +140,8 @@ page {
   color: rgba(18, 22, 26, 0.92);
   line-height: 1.25;
   margin-bottom: 18rpx;
+  /* 给右上角状态角标留位，长标题不会钻到角标下面 */
+  padding-right: 96rpx;
 }
 
 .match-row {

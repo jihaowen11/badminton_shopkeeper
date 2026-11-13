@@ -1,6 +1,8 @@
 // pages/user/info/index.js
 
 const { UPLOAD_AVATAR, UPDATA_USER } = require('../../../request/api')
+const { stripStaticUrl, toStaticUrl } = require('../../../utils/static')
+const { createScrollSync } = require('../../../utils/scrollSync')
 
 const LEVEL_OPTIONS = ['萌新', '1级', '2级', '3级', '4级', '5级', '6级', '7级', '8级', '9级', '专业级']
 
@@ -78,13 +80,7 @@ Page({
   hydrateFromGlobalUser() {
     const app = getApp()
     const u = (app.globalData && app.globalData.userInfo) || {}
-    const join =
-      app.fun && typeof app.fun.joinStaticUrl === 'function'
-        ? (p) => app.fun.joinStaticUrl(p)
-        : (p) => p
-
-    const rawAvatar = u.avatar != null && String(u.avatar).trim() !== '' ? String(u.avatar).trim() : ''
-    const avatarUrl = rawAvatar ? join(rawAvatar) : ''
+    const avatarUrl = toStaticUrl(u.avatar)
 
     const g = Number(u.gender)
     const gender = g === 1 || g === 2 ? g : 0
@@ -116,12 +112,7 @@ Page({
     })
   },
 
-  onPageScroll(e) {
-    const st = e && typeof e.scrollTop === 'number' ? e.scrollTop : 0
-    if (st !== this.data.pageScrollTop) {
-      this.setData({ pageScrollTop: st })
-    }
-  },
+  onPageScroll: createScrollSync('pageScrollTop', 10),
 
   onChooseAvatar(e) {
     const localPath = e && e.detail ? e.detail.avatarUrl : ''
@@ -139,11 +130,7 @@ Page({
       .then((obj) => {
         const serverUrl = pickAvatarUrl(obj)
         if (serverUrl) {
-          const display =
-            app.fun && typeof app.fun.joinStaticUrl === 'function'
-              ? app.fun.joinStaticUrl(serverUrl)
-              : serverUrl
-          this.setData({ avatarUrl: display })
+          this.setData({ avatarUrl: toStaticUrl(serverUrl) })
         } else {
           this.setData({ avatarUrl: prev })
           wx.showToast({ title: '未返回头像地址', icon: 'none' })
@@ -205,10 +192,7 @@ Page({
       return
     }
 
-    const avatarRaw =
-      app.fun && typeof app.fun.stripStaticUrl === 'function'
-        ? app.fun.stripStaticUrl(this.data.avatarUrl)
-        : this.data.avatarUrl
+    const avatarRaw = stripStaticUrl(this.data.avatarUrl)
     const avatarTrim = (avatarRaw || '').trim()
     const avatar = avatarTrim === '' ? null : avatarTrim
 

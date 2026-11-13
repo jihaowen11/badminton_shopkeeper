@@ -1,6 +1,6 @@
-const DEFAULT_AVATAR = '/images/noheader.jpg'
 const { CLUB_MY_LIST, USER_STATS } = require('../../request/api')
 const { whenLoginReady, pickOpenId } = require('../../utils/auth')
+const { DEFAULT_AVATAR, toAvatarUrl, toStaticUrl } = require('../../utils/static')
 const { mapRecentMatches, formatStats } = require('../../utils/matchView')
 
 function formatJoinDate(createdAt) {
@@ -21,20 +21,7 @@ function mapUserToView(user) {
       userJoinText: '',
     }
   }
-  const rawAvatar = user.avatar && String(user.avatar).trim() ? String(user.avatar).trim() : ''
-  let avatar = DEFAULT_AVATAR
-  if (rawAvatar) {
-    try {
-      const app = getApp()
-      if (app.fun && typeof app.fun.joinStaticUrl === 'function') {
-        avatar = app.fun.joinStaticUrl(rawAvatar)
-      } else {
-        avatar = rawAvatar
-      }
-    } catch (e) {
-      avatar = rawAvatar
-    }
-  }
+  const avatar = toAvatarUrl(user.avatar)
   const nick =
     user.nickName && String(user.nickName).trim() ? String(user.nickName).trim() : '未命名'
   const g = Number(user.gender)
@@ -63,18 +50,6 @@ function toAvatarAbbr(name) {
   return text.slice(0, 1).toUpperCase()
 }
 
-function toAvatarUrl(rawAvatar) {
-  const path = rawAvatar == null ? '' : String(rawAvatar).trim()
-  if (!path) return ''
-  try {
-    const app = getApp()
-    if (app && app.fun && typeof app.fun.joinStaticUrl === 'function') {
-      return app.fun.joinStaticUrl(path)
-    }
-  } catch (e) {}
-  return path
-}
-
 function toRoleText(role, isCreator) {
   if (isCreator) return '会长'
   const r = role == null ? '' : String(role).toLowerCase()
@@ -92,7 +67,7 @@ function mapClubToView(item, openid, index) {
     const className = idx > 0 ? `is-${idx + 1}` : ''
     return {
       abbr: toAvatarAbbr(m && m.userName),
-      avatarUrl: toAvatarUrl(m && m.userAvatar),
+      avatarUrl: toStaticUrl(m && m.userAvatar),
       className,
     }
   })

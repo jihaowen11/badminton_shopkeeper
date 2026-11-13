@@ -89,9 +89,51 @@ function onListening() {
     ? 'pipe ' + addr
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
+  console.log('[server] listening on ' + bind);
 
   // 表结构建好之后再补二级索引；异步执行，失败只记日志，不阻塞启动
   require('../config/indexes').ensureIndexes().catch(function (err) {
     console.error('[index] 初始化异常：', err && err.message ? err.message : err);
   });
+
+  // 垃圾数据回收：报名中/进行中/已取消的超期比赛，按配置的时间阈值自动处理。
+  // 定时器内部已经 unref，进程可以正常退出；RECYCLE_ENABLED=false 可整体关掉。
+  require('../utils/recycler').start();
 }
+
+/**
+ * 优雅退出
+ *
+ * pm2 restart / docker stop 默认先发 SIGTERM：这里先停掉定时任务、不再接新连接，
+ * 等在途请求跑完再关连接池，避免重启瞬间出现一批 502 / 连接被重置。
+ */
+var shuttingDown = false;
+function shutdown(signal) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log('[server] 收到 ' + signal + '，开始优雅退出');
+
+  try {
+    require('../utils/recycler').stop();
+  } catch (e) {}
+
+  // 兜底：10 秒还没退干净就强杀，防止僵死进程占着端口
+  var forceTimer = setTimeout(function () {
+    console.error('[server] 退出超时，强制结束');
+    process.exit(1);
+  }, 10000);
+  if (typeof forceTimer.unref === 'function') forceTimer.unref();
+
+  server.close(function () {
+    var db = require('../config/db');
+    Promise.resolve(db && db.sequelize ? db.sequelize.close() : null)
+      .catch(function () {})
+      .then(function () {
+        console.log('[server] 已退出');
+        process.exit(0);
+      });
+  });
+}
+
+process.on('SIGTERM', function () { shutdown('SIGTERM'); });
+process.on('SIGINT', function () { shutdown('SIGINT'); });

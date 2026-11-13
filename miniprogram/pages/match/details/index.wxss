@@ -133,12 +133,25 @@ page {
   box-shadow: 0 10rpx 20rpx rgba(0, 0, 0, 0.12);
 }
 
-.ribbon--end {
-  background: rgba(143, 152, 161, 0.9);
+/* 与比赛列表同一套状态配色：绿=报名中 蓝=进行中 灰=已结束 橙=中断 红=已取消 */
+.ribbon--open {
+  background: #0a8f3e;
 }
 
-.ribbon--open {
-  background: rgba(10, 143, 62, 0.78);
+.ribbon--playing {
+  background: #1677ff;
+}
+
+.ribbon--end {
+  background: #8a929b;
+}
+
+.ribbon--interrupted {
+  background: #d9860a;
+}
+
+.ribbon--cancelled {
+  background: #d04343;
 }
 
 .match-title {
@@ -730,18 +743,35 @@ page {
   color: #ffffff;
 }
 
-.footer-status--end {
-  background: linear-gradient(90deg, #0a8f3e 0%, #0fb35b 100%);
-  box-shadow: 0 10rpx 22rpx rgba(10, 143, 62, 0.22);
-}
-
+/* 底部状态条与角标同一套颜色：绿=报名中 蓝=进行中 灰=已结束 橙=中断 红=已取消 */
 .footer-status--open {
   background: linear-gradient(90deg, #0a8f3e 0%, #0fb35b 100%);
   box-shadow: 0 10rpx 22rpx rgba(10, 143, 62, 0.22);
 }
 
+.footer-status--playing {
+  background: linear-gradient(90deg, #1677ff 0%, #3d97ff 100%);
+  box-shadow: 0 10rpx 22rpx rgba(22, 119, 255, 0.24);
+}
+
+.footer-status--end {
+  background: linear-gradient(90deg, #8a929b 0%, #9ba3ac 100%);
+  box-shadow: 0 10rpx 22rpx rgba(138, 146, 155, 0.2);
+}
+
+.footer-status--interrupted {
+  background: linear-gradient(90deg, #d9860a 0%, #f0a03c 100%);
+  box-shadow: 0 10rpx 22rpx rgba(217, 134, 10, 0.24);
+}
+
+.footer-status--cancelled {
+  background: linear-gradient(90deg, #d04343 0%, #e06a6a 100%);
+  box-shadow: 0 10rpx 22rpx rgba(208, 67, 67, 0.24);
+}
+
 /* ---------- 邀请俱乐部成员弹窗（列表样式对齐 club/index 卡片） ---------- */
-.invite-club-mask {
+.invite-club-mask,
+.round-picker-mask {
   position: fixed;
   left: 0;
   right: 0;
@@ -757,7 +787,8 @@ page {
   padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
 }
 
-.invite-club-dialog {
+.invite-club-dialog,
+.round-picker-dialog {
   width: 100%;
   max-height: 78vh;
   background: #f7fbf9;
@@ -951,7 +982,8 @@ page {
   background: rgba(18, 22, 26, 0.04);
 }
 
-.invite-club-footer {
+.invite-club-footer,
+.round-picker-footer {
   flex-shrink: 0;
   display: flex;
   gap: 18rpx;
@@ -961,7 +993,8 @@ page {
   border-top: 1px solid rgba(18, 22, 26, 0.06);
 }
 
-.invite-club-btn {
+.invite-club-btn,
+.round-picker-btn {
   flex: 1;
   margin: 0;
   height: 88rpx;
@@ -973,16 +1006,19 @@ page {
   padding: 0;
 }
 
-.invite-club-btn::after {
+.invite-club-btn::after,
+.round-picker-btn::after {
   border: none;
 }
 
-.invite-club-btn--ghost {
+.invite-club-btn--ghost,
+.round-picker-btn--ghost {
   background: rgba(18, 22, 26, 0.06);
   color: rgba(18, 22, 26, 0.72);
 }
 
-.invite-club-btn--primary {
+.invite-club-btn--primary,
+.round-picker-btn--primary {
   color: #ffffff;
   background: linear-gradient(90deg, #0a8f3e 0%, #0fb35b 100%);
   box-shadow: 0 10rpx 22rpx rgba(10, 143, 62, 0.22);
@@ -1115,4 +1151,409 @@ page {
   font-size: 24rpx;
   line-height: 1.5;
   color: rgba(18, 22, 26, 0.5);
+}
+
+/* ===== 排期：当前轮次与撤销比分 ===== */
+.schedule-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding-right: 8rpx;
+}
+
+.schedule-summary-row .schedule-summary {
+  flex: 1;
+  min-width: 0;
+  padding-right: 0;
+}
+
+.schedule-locate {
+  flex-shrink: 0;
+  padding: 8rpx 20rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 800;
+  color: #0a8f3e;
+  background: rgba(10, 143, 62, 0.1);
+  border: 1px solid rgba(10, 143, 62, 0.18);
+}
+
+.schedule-locate-hover {
+  background: rgba(10, 143, 62, 0.18);
+}
+
+.round-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  min-width: 0;
+}
+
+.round-current-tag {
+  padding: 2rpx 12rpx;
+  border-radius: 8rpx;
+  font-size: 20rpx;
+  font-weight: 900;
+  color: #ffffff;
+  background: linear-gradient(90deg, #0a8f3e 0%, #0fb35b 100%);
+}
+
+/* 当前轮整组轻微提亮，方便一眼扫到 */
+.round-group--current {
+  padding: 0 8rpx 8rpx;
+  margin-left: -8rpx;
+  margin-right: -8rpx;
+  border-radius: 20rpx;
+  background: rgba(10, 143, 62, 0.05);
+}
+
+.pair-score-undo {
+  padding: 4rpx 16rpx;
+  border-radius: 999rpx;
+  font-size: 20rpx;
+  font-weight: 800;
+  color: rgba(224, 32, 32, 0.9);
+  background: rgba(224, 32, 32, 0.08);
+}
+
+/* ===== 轮数选择弹层 ===== */
+.round-picker-head {
+  padding: 32rpx 32rpx 8rpx;
+  text-align: center;
+}
+
+.round-picker-title {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 900;
+  color: rgba(18, 22, 26, 0.88);
+}
+
+.round-picker-sub {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: rgba(18, 22, 26, 0.5);
+}
+
+.round-picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 36rpx 0;
+}
+
+.round-picker-row-label {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: rgba(18, 22, 26, 0.72);
+}
+
+.round-picker-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.round-mini-btn {
+  width: 64rpx;
+  height: 64rpx;
+  line-height: 60rpx;
+  text-align: center;
+  border-radius: 50%;
+  font-size: 32rpx;
+  font-weight: 900;
+  color: rgba(18, 22, 26, 0.7);
+  background: #ffffff;
+  border: 1px solid rgba(18, 22, 26, 0.1);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.round-mini-btn--off {
+  color: rgba(18, 22, 26, 0.22);
+  background: rgba(18, 22, 26, 0.03);
+  border-color: rgba(18, 22, 26, 0.05);
+  box-shadow: none;
+}
+
+.round-step-hover {
+  background: rgba(18, 22, 26, 0.06);
+}
+
+.round-mini-value {
+  display: flex;
+  align-items: baseline;
+  gap: 4rpx;
+  min-width: 96rpx;
+  justify-content: center;
+}
+
+.round-mini-num {
+  font-size: 44rpx;
+  font-weight: 900;
+  color: rgba(18, 22, 26, 0.9);
+  font-variant-numeric: tabular-nums;
+}
+
+.round-mini-unit {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: rgba(18, 22, 26, 0.45);
+}
+
+.round-picker-total {
+  margin-top: 28rpx;
+  text-align: center;
+  font-size: 24rpx;
+  font-weight: 700;
+  color: rgba(18, 22, 26, 0.55);
+}
+
+.round-picker-reset {
+  margin: 16rpx auto 0;
+  width: fit-content;
+  padding: 8rpx 24rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 800;
+  color: #0a8f3e;
+  background: rgba(10, 143, 62, 0.08);
+}
+
+.round-picker-footer {
+  margin-top: 24rpx;
+}
+
+/* ===== 场次计分弹层 ===== */
+.score-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 210;
+  background: rgba(18, 22, 26, 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0 24rpx;
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+}
+
+.score-sheet {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 28rpx 28rpx 24rpx;
+  background: #f7fbf9;
+  border-radius: 28rpx 28rpx 20rpx 20rpx;
+  box-shadow: 0 -12rpx 40rpx rgba(0, 0, 0, 0.12);
+}
+
+.score-head {
+  text-align: center;
+}
+
+.score-title {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 900;
+  color: #12161a;
+}
+
+.score-sub {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+  color: rgba(18, 22, 26, 0.5);
+}
+
+/* 左右对阵面板：两栏并排，比分大字居中 */
+.score-board {
+  display: flex;
+  align-items: stretch;
+  margin-top: 20rpx;
+}
+
+.score-side {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 22rpx 14rpx 20rpx;
+  border-radius: 24rpx;
+  background: #ffffff;
+  border: 1px solid rgba(18, 22, 26, 0.06);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.score-side.is-win {
+  background: rgba(10, 143, 62, 0.06);
+  border-color: rgba(10, 143, 62, 0.4);
+  box-shadow: 0 8rpx 22rpx rgba(10, 143, 62, 0.1);
+}
+
+/* 头像行：两人并排，不再显示名字 */
+.score-side-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  width: 100%;
+  min-height: 76rpx;
+}
+
+.score-avatar {
+  width: 76rpx;
+  height: 76rpx;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #eef2f0;
+  border: 2rpx solid #ffffff;
+  box-shadow: 0 2rpx 8rpx rgba(18, 22, 26, 0.1);
+}
+
+.score-win-tag {
+  flex-shrink: 0;
+  padding: 2rpx 12rpx;
+  border-radius: 999rpx;
+  font-size: 20rpx;
+  font-weight: 900;
+  color: #ffffff;
+  background: #0a8f3e;
+}
+
+.score-side-num {
+  margin-top: 6rpx;
+  font-size: 112rpx;
+  line-height: 116rpx;
+  font-weight: 900;
+  color: rgba(18, 22, 26, 0.88);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -3rpx;
+}
+
+.score-side-num.is-win {
+  color: #0a8f3e;
+}
+
+.score-side-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  margin-top: 8rpx;
+}
+
+.score-vs {
+  flex: 0 0 88rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+}
+
+.score-vs-text {
+  font-size: 26rpx;
+  font-weight: 900;
+  letter-spacing: 1rpx;
+  color: rgba(18, 22, 26, 0.24);
+}
+
+.score-btn {
+  width: 84rpx;
+  height: 84rpx;
+  line-height: 80rpx;
+  text-align: center;
+  border-radius: 50%;
+  font-size: 40rpx;
+  font-weight: 900;
+  color: rgba(18, 22, 26, 0.72);
+  background: #f2f6f4;
+  border: 1px solid rgba(18, 22, 26, 0.08);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.score-btn--plus {
+  color: #ffffff;
+  background: #0a8f3e;
+  border-color: #0a8f3e;
+}
+
+/* 长按连加中：按钮缩一下 + 光圈，明确告诉用户「还在加」 */
+.score-btn--plus.is-pressing {
+  background: #07822f;
+  transform: scale(0.9);
+  box-shadow: 0 0 0 12rpx rgba(10, 143, 62, 0.16);
+}
+
+.score-btn-hover {
+  opacity: 0.72;
+}
+
+.score-hint {
+  margin-top: 18rpx;
+  min-height: 34rpx;
+  text-align: center;
+  font-size: 24rpx;
+  font-weight: 700;
+  color: rgba(18, 22, 26, 0.5);
+}
+
+.score-hint--win {
+  color: #0a8f3e;
+}
+
+.score-footer {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 20rpx;
+}
+
+.score-btn-ghost,
+.score-btn-primary {
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 999rpx;
+  text-align: center;
+  font-size: 30rpx;
+  font-weight: 900;
+}
+
+.score-btn-ghost::after,
+.score-btn-primary::after {
+  border: none;
+}
+
+.score-btn-ghost {
+  color: rgba(18, 22, 26, 0.72);
+  background: #ffffff;
+  border: 1px solid rgba(18, 22, 26, 0.1);
+}
+
+.score-btn-primary {
+  color: #ffffff;
+  background: #0a8f3e;
+}
+
+.score-btn-primary[disabled] {
+  color: #ffffff;
+  background: rgba(10, 143, 62, 0.6);
+}
+
+.score-undo {
+  margin-top: 16rpx;
+  text-align: center;
+  font-size: 24rpx;
+  font-weight: 800;
+  color: rgba(224, 32, 32, 0.85);
 }

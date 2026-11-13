@@ -21,6 +21,8 @@ const CLUB_DES = (data) => postRequest(`/clubs/detail`, data)
 const DEL_CLUB = (data) => postRequest(`/clubs/delete`, data)
 //查询我的俱乐部列表
 const CLUB_MY_LIST = (data) => postRequest(`/clubs/myList`, data)
+//俱乐部动态（自动流）：{ clubId, cursor, pageSize }
+const CLUB_FEED = (data) => postRequest(`/clubs/feed`, data)
 
 //俱乐部成员
 //邀请加入俱乐部
@@ -81,6 +83,7 @@ module.exports = {
   CLUB_DES,
   DEL_CLUB,
   CLUB_MY_LIST,
+  CLUB_FEED,
   INVITE_CLUB,
   EXIT_CLUB,
   SET_ADMIN,

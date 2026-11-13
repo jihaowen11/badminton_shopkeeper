@@ -2,8 +2,9 @@ const { DataTypes, Op } = require('sequelize');
 const db = require('../config/db');
 const Sequelize = db.sequelize;
 const clubMembers = require('../schema/clubMembers')(Sequelize, DataTypes);
+const { safeSync } = require('../utils/safeSync');
 
-clubMembers.sync({ force: false });
+safeSync(clubMembers, 'clubMembers');
 
 class ClubMemberModel {
     static async create(data, options) {

@@ -1,11 +1,12 @@
 // pages/cost/index.js
 
 const { BallSim, sumShuttleQty } = require('./balls.js')
-const { MATCH_ROUNDS_LIST, MATCH_DES } = require('../../request/api')
+const { MATCH_ROUNDS_LIST } = require('../../request/api')
 const { whenLoginReady } = require('../../utils/auth')
+const { DEFAULT_AVATAR, toAvatarUrl } = require('../../utils/static')
+const { createScrollSync } = require('../../utils/scrollSync')
 
 const STORAGE_KEY = 'cost_bill_draft'
-const DEFAULT_AVATAR = '/images/noheader.jpg'
 
 function uid() {
   return `l${Date.now()}_${Math.floor(Math.random() * 1000)}`
@@ -21,19 +22,6 @@ function fmtMoney(n) {
   if (Number.isInteger(v)) return String(v)
   const s = v.toFixed(2)
   return s.replace(/\.?0+$/, '')
-}
-
-/** 头像路径转成可访问地址（服务端存的是 /avatar/xxx.jpg 这种相对路径） */
-function toAvatarUrl(raw) {
-  const path = raw == null ? '' : String(raw).trim()
-  if (!path) return DEFAULT_AVATAR
-  try {
-    const app = getApp()
-    if (app && app.fun && typeof app.fun.joinStaticUrl === 'function') {
-      return app.fun.joinStaticUrl(path)
-    }
-  } catch (e) {}
-  return path || DEFAULT_AVATAR
 }
 
 /**
@@ -120,10 +108,8 @@ Page({
     totalText: '0',
     avgText: '0',
 
-    // 从比赛进入时带 matchId，人员来自报名名单
+    // 从比赛进入时带 matchId，人员直接取这场比赛已在排期/报名里的人
     matchId: '',
-    fromMatch: false,
-    matchTitle: '',
     loading: false,
 
     // 结算建议：[{ from, to, amountText }]，全部为 0 时为空数组
@@ -163,7 +149,7 @@ Page({
     this._heroH = 0
     const matchId = options && options.matchId ? String(options.matchId) : ''
     if (matchId) {
-      this.setData({ matchId, fromMatch: true })
+      this.setData({ matchId })
       this.loadMatchParticipants(matchId)
     } else {
       this.loadDraft()
@@ -174,11 +160,8 @@ Page({
   loadMatchParticipants(matchId) {
     this.setData({ loading: true })
     return whenLoginReady()
-      .then(() => Promise.all([
-        MATCH_ROUNDS_LIST({ matchId }).catch(() => null),
-        MATCH_DES({ id: matchId }).catch(() => null),
-      ]))
-      .then(([schedule, detail]) => {
+      .then(() => MATCH_ROUNDS_LIST({ matchId }).catch(() => null))
+      .then((schedule) => {
         const players = (schedule && Array.isArray(schedule.players)) ? schedule.players : []
         const participants = players
           .map((p, index) => ({
@@ -190,22 +173,18 @@ Page({
 
         if (participants.length === 0) {
           // 没报名数据（比如比赛还没人报名）就退回本地草稿，别让页面空着
-          this.setData({ fromMatch: false })
           this.loadDraft()
           return
         }
 
         const firstPid = participants[0].id
-        const title = detail && (detail.name || detail.title) ? String(detail.name || detail.title) : ''
         this.setData({
           participants,
-          matchTitle: title,
           lineItems: this.data.lineItems.map((it) => ({ ...it, payerId: firstPid, payerAvatar: participants[0].avatar })),
         })
         this.recalcAll()
       })
       .catch(() => {
-        this.setData({ fromMatch: false })
         this.loadDraft()
       })
       .finally(() => {
@@ -321,6 +300,37 @@ Page({
       })
   },
 
+  /** 默认费用明细：一条场地费 + 一条球费，垫付人默认第一个人 */
+  buildDefaultLines(payerId, payerAvatar) {
+    const first = this.data.participants[0] || {}
+    const pid = payerId || first.id || 'me'
+    const avatar = payerAvatar || first.avatar || DEFAULT_AVATAR
+    return [
+      {
+        id: 'line_court_default',
+        type: 'court',
+        label: '场地费',
+        courtAmount: '',
+        unitPrice: '',
+        qty: 1,
+        payerId: pid,
+        lineTotal: '0',
+        payerAvatar: avatar,
+      },
+      {
+        id: 'line_shuttle_default',
+        type: 'shuttle',
+        label: '球费',
+        courtAmount: '',
+        unitPrice: '',
+        qty: 1,
+        payerId: pid,
+        lineTotal: '0',
+        payerAvatar: avatar,
+      },
+    ]
+  },
+
   /** 没有草稿时的初始人员：只有"我"一个，其他用「+ 人员」补 */
   defaultParticipants() {
     let name = '我'
@@ -353,12 +363,7 @@ Page({
     this.setData({ participants }, () => this.recalcAll())
   },
 
-  onPageScroll(e) {
-    const st = e && typeof e.scrollTop === 'number' ? e.scrollTop : 0
-    if (st !== this.data.pageScrollTop) {
-      this.setData({ pageScrollTop: st })
-    }
-  },
+  onPageScroll: createScrollSync('pageScrollTop', 10),
 
   lineAmount(item) {
     if (item.type === 'shuttle') {
@@ -375,14 +380,14 @@ Page({
     parts.forEach((p) => {
       pmap[p.id] = p
     })
-    const fallback = parts[0] || { avatar: '/images/noheader.jpg', id: '' }
+    const fallback = parts[0] || { avatar: DEFAULT_AVATAR, id: '' }
     return lines.map((it) => {
       const p = pmap[it.payerId] || fallback
       return {
         ...it,
         payerId: p.id || it.payerId,
         lineTotal: fmtMoney(this.lineAmount(it)),
-        payerAvatar: p.avatar || '/images/noheader.jpg',
+        payerAvatar: p.avatar || DEFAULT_AVATAR,
       }
     })
   },
@@ -477,7 +482,7 @@ Page({
             qty: 1,
             payerId: firstPid,
             lineTotal: '0',
-            payerAvatar: '/images/noheader.jpg',
+            payerAvatar: DEFAULT_AVATAR,
           }
         } else {
           row = {
@@ -489,7 +494,7 @@ Page({
             qty: 1,
             payerId: firstPid,
             lineTotal: '0',
-            payerAvatar: '/images/noheader.jpg',
+            payerAvatar: DEFAULT_AVATAR,
           }
         }
         const lineItems = this.data.lineItems.concat(row)
@@ -527,8 +532,92 @@ Page({
       success: (res) => {
         if (!res.confirm) return
         const name = (res.content || '').trim() || `球友${this.data.participants.length + 1}`
-        const row = { id: uid(), name, avatar: '/images/noheader.jpg' }
+        const row = { id: uid(), name, avatar: DEFAULT_AVATAR }
         this.setData({ participants: this.data.participants.concat(row) }, () => this.recalcAll())
+      },
+    })
+  },
+
+  /** 点头像：改名 / 删除。删除后把垫付人重挂到剩下第一个人，避免指向不存在的人 */
+  onTapParticipant(e) {
+    const id = e.currentTarget.dataset.id
+    const p = this.data.participants.find((it) => it.id === id)
+    if (!p) return
+    const canRemove = this.data.participants.length > 1
+    wx.showActionSheet({
+      itemList: canRemove ? ['修改昵称', '删除该人员'] : ['修改昵称'],
+      success: (res) => {
+        if (res.tapIndex === 0) this.renameParticipant(p)
+        else if (res.tapIndex === 1) this.removeParticipant(p)
+      },
+    })
+  },
+
+  renameParticipant(p) {
+    wx.showModal({
+      title: '修改昵称',
+      editable: true,
+      content: p.name || '',
+      placeholderText: '请输入昵称',
+      success: (res) => {
+        if (!res.confirm) return
+        const name = (res.content || '').trim()
+        if (!name) return
+        const participants = this.data.participants.map((it) => (it.id === p.id ? { ...it, name } : it))
+        this.setData({ participants }, () => this.recalcAll())
+      },
+    })
+  },
+
+  removeParticipant(p) {
+    if (this.data.participants.length <= 1) {
+      wx.showToast({ title: '至少保留1人', icon: 'none' })
+      return
+    }
+    wx.showModal({
+      title: '删除人员',
+      content: `确定删除「${p.name || '球友'}」？`,
+      confirmText: '删除',
+      confirmColor: '#e54545',
+      success: (res) => {
+        if (!res.confirm) return
+        const participants = this.data.participants.filter((it) => it.id !== p.id)
+        const first = participants[0]
+        const lineItems = this.data.lineItems.map((it) =>
+          it.payerId === p.id ? { ...it, payerId: first.id, payerAvatar: first.avatar } : it,
+        )
+        this.setData({ participants, lineItems }, () => this.recalcAll())
+      },
+    })
+  },
+
+  /** 清空重填：丢掉草稿，回到初始状态（从比赛进入的，人员重新按报名名单拉一次） */
+  onReset() {
+    const inMatch = !!this.data.matchId
+    wx.showModal({
+      title: '清空重填',
+      content: inMatch ? '将清除本次填写的费用，人员恢复为比赛名单。' : '将清除本次填写的人员和费用，恢复为初始状态。',
+      confirmText: '清空',
+      confirmColor: '#e54545',
+      success: (res) => {
+        if (!res.confirm) return
+        try {
+          wx.removeStorageSync(this.storageKey())
+        } catch (e) {}
+        if (inMatch) {
+          // 人员不从本地草稿恢复，交给 loadMatchParticipants 重新拉名单
+          const lineItems = this.buildDefaultLines()
+          this.setData({ lineItems, settlements: [], totalText: '0', avgText: '0' }, () => {
+            this.loadMatchParticipants(this.data.matchId)
+          })
+        } else {
+          const participants = this.defaultParticipants()
+          const lineItems = this.buildDefaultLines(participants[0].id, participants[0].avatar)
+          this.setData({ participants, lineItems, settlements: [], totalText: '0', avgText: '0' }, () =>
+            this.recalcAll(),
+          )
+        }
+        wx.showToast({ title: '已清空', icon: 'none' })
       },
     })
   },

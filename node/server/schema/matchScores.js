@@ -60,5 +60,9 @@ module.exports = function (sequelize, DataTypes) {
         }
     }, {
         freezeTableName: true,
+        indexes: [
+            // 按比赛/局号取比分，避免数据量涨起来后全表扫描
+            { name: 'idx_ms_match_game', fields: ['match_id', 'game_number'] }
+        ]
     })
 }

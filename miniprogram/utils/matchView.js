@@ -5,14 +5,7 @@
  * 约定：左队永远是"我这边"，这样列表读起来视线一致。
  */
 
-function pad2(n) {
-  return String(n).padStart(2, '0')
-}
-
-function toText(v, fallback = '') {
-  const s = v == null ? '' : String(v).trim()
-  return s || fallback
-}
+const { pad2, toText } = require('./format')
 
 function isSameDay(a, b) {
   return (

@@ -33,7 +33,7 @@
 
   <view wx:if="{{activeTab === 'match'}}" class="tab-panel tab-panel--match">
     <view class="main-card match-card">
-      <view class="ribbon ribbon--{{match.status}}">{{match.statusText}}</view>
+      <view class="ribbon ribbon--{{match.statusKey}}">{{match.statusText}}</view>
       <view class="match-title">{{match.title}}</view>
 
       <view class="info-row">
@@ -64,7 +64,7 @@
 
       <view class="match-divider"></view>
 
-      <view class="info-row info-row--tap" bindtap="onTapViews" hover-class="info-row-hover">
+      <view class="info-row">
         <text class="info-text info-text--full">浏览量：{{match.views}}</text>
         <view class="row-end row-end--gap">
           <view class="new-pill">hot</view>
@@ -130,8 +130,16 @@
     </block>
 
     <block wx:else>
-      <view class="schedule-summary">
-        共 {{scheduleMeta.totalRounds}} 轮 · {{scheduleMeta.totalMatches}} 场 · 已完成 {{scheduleMeta.finishedMatches}} 场
+      <view class="schedule-summary-row">
+        <view class="schedule-summary">
+          共 {{scheduleMeta.totalRounds}} 轮 · {{scheduleMeta.totalMatches}} 场{{scheduleMeta.courts > 0 ? ' · ' + scheduleMeta.courts + ' 片场地' : ''}} · 已完成 {{scheduleMeta.finishedMatches}} 场
+        </view>
+        <view
+          wx:if="{{scheduleMeta.currentRound > 0 && scheduleMeta.totalRounds > 1}}"
+          class="schedule-locate"
+          bindtap="onLocateCurrentRound"
+          hover-class="schedule-locate-hover"
+        >定位第 {{scheduleMeta.currentRound}} 轮</view>
       </view>
 
       <view
@@ -139,11 +147,15 @@
         wx:for-item="rd"
         wx:for-index="rdIdx"
         wx:key="no"
-        class="round-group"
+        id="round-no-{{rd.no}}"
+        class="round-group {{rd.isCurrent ? 'round-group--current' : ''}}"
       >
         <view class="round-head">
-          <text class="round-title">{{rd.label}}</text>
-          <text class="round-meta">{{rd.courts.length}} 场{{rd.restingText}}</text>
+          <view class="round-title-wrap">
+            <text class="round-title">{{rd.label}}</text>
+            <text wx:if="{{rd.isCurrent}}" class="round-current-tag">当前</text>
+          </view>
+          <text class="round-meta">{{rd.courts.length}} 场</text>
         </view>
 
         <view
@@ -206,6 +218,12 @@
               <text class="pair-score-num {{item.winSide === 'right' ? 'is-win' : ''}}">{{item.scoreRight}}</text>
             </view>
             <view wx:else class="pair-score-pending">{{item.canEdit ? '去记分' : '待开赛'}}</view>
+            <view
+              wx:if="{{item.done && (canGenerate || item.canEdit) && match.statusCode !== 3 && match.statusCode !== 5}}"
+              class="pair-score-undo"
+              data-round-id="{{item.roundId}}"
+              catchtap="onClearScore"
+            >撤销</view>
           </view>
         </view>
       </view>
@@ -300,10 +318,182 @@
         >
           {{joining ? '报名中...' : ((match.capacity > 0 && match.joined >= match.capacity) ? '报名已满' : '我要报名')}}
         </button>
-        <view wx:else class="footer-status footer-status--{{match.status}}">
+        <view wx:else class="footer-status footer-status--{{match.statusKey}}">
           {{hasJoined && match.statusCode === 1 ? '已报名' : match.actionText}}
         </view>
       </block>
+    </view>
+  </view>
+
+  <!-- 排期设置：场地片数 + 轮数 -->
+  <view wx:if="{{roundPickerVisible}}" class="round-picker-mask" bindtap="onCloseRoundPicker">
+    <view class="round-picker-dialog" catchtap="stopInviteModalBubble">
+      <view class="round-picker-head">
+        <text class="round-picker-title">排期设置</text>
+        <text class="round-picker-sub">{{roundPickHint}}</text>
+      </view>
+
+      <view class="round-picker-row">
+        <text class="round-picker-row-label">场地片数</text>
+        <view class="round-picker-ctrl">
+          <view
+            class="round-mini-btn {{roundPickCourts <= 1 ? 'round-mini-btn--off' : ''}}"
+            data-dir="-1"
+            bindtap="onCourtStep"
+            hover-class="round-step-hover"
+          >−</view>
+          <view class="round-mini-value">
+            <text class="round-mini-num">{{roundPickCourts}}</text>
+            <text class="round-mini-unit">片</text>
+          </view>
+          <view
+            class="round-mini-btn {{roundPickCourts >= roundPickCourtsMax ? 'round-mini-btn--off' : ''}}"
+            data-dir="1"
+            bindtap="onCourtStep"
+            hover-class="round-step-hover"
+          >＋</view>
+        </view>
+      </view>
+
+      <view class="round-picker-row">
+        <text class="round-picker-row-label">轮数</text>
+        <view class="round-picker-ctrl">
+          <view
+            class="round-mini-btn {{roundPick <= 1 ? 'round-mini-btn--off' : ''}}"
+            data-dir="-1"
+            bindtap="onRoundStep"
+            hover-class="round-step-hover"
+          >−</view>
+          <view class="round-mini-value">
+            <text class="round-mini-num">{{roundPick}}</text>
+            <text class="round-mini-unit">轮</text>
+          </view>
+          <view
+            class="round-mini-btn {{roundPick >= roundPickMax ? 'round-mini-btn--off' : ''}}"
+            data-dir="1"
+            bindtap="onRoundStep"
+            hover-class="round-step-hover"
+          >＋</view>
+        </view>
+      </view>
+
+      <view class="round-picker-total">共 {{roundPickTotal}} 场（{{roundPickCourts}} 片场地 × {{roundPick}} 轮）</view>
+      <view
+        wx:if="{{roundPick !== roundPickDefault}}"
+        class="round-picker-reset"
+        bindtap="onRoundReset"
+      >恢复推荐 {{roundPickDefault}} 轮</view>
+
+      <view class="round-picker-footer">
+        <button class="round-picker-btn round-picker-btn--ghost" bindtap="onCloseRoundPicker">取消</button>
+        <button
+          class="round-picker-btn round-picker-btn--primary"
+          bindtap="onConfirmRoundPick"
+          loading="{{generating}}"
+          disabled="{{generating}}"
+        >{{generating ? '排期中...' : '开始排期'}}</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 场次计分弹层 -->
+  <view wx:if="{{scoreVisible}}" class="score-mask" bindtap="onCloseScore">
+    <view class="score-sheet" catchtap="stopInviteModalBubble">
+      <view class="score-head">
+        <text class="score-title">{{scoreTitle}}</text>
+        <text class="score-sub">{{scoreSubTitle}}</text>
+      </view>
+
+      <!-- 左右对阵：两栏并排，谁领先一眼看得出 -->
+      <view class="score-board">
+        <view class="score-side {{scoreWinner === 'team1' ? 'is-win' : ''}}">
+          <view class="score-side-head">
+            <block wx:for="{{scoreTeam1Avatars}}" wx:key="index">
+              <image class="score-avatar" src="{{item}}" mode="aspectFill" />
+            </block>
+            <text wx:if="{{scoreWinner === 'team1'}}" class="score-win-tag">胜</text>
+          </view>
+          <view class="score-side-num {{scoreWinner === 'team1' ? 'is-win' : ''}}">{{scoreLeft}}</view>
+          <view class="score-side-ctrl">
+            <view
+              class="score-btn"
+              data-side="team1"
+              data-dir="-1"
+              bindtap="onScoreStep"
+              bindtouchstart="onScorePressStart"
+              bindtouchend="onScorePressEnd"
+              bindtouchcancel="onScorePressEnd"
+              hover-class="score-btn-hover"
+              hover-stay-time="60"
+            >−</view>
+            <view
+              class="score-btn score-btn--plus {{scorePressing === 'team1' ? 'is-pressing' : ''}}"
+              data-side="team1"
+              data-dir="1"
+              bindtap="onScoreStep"
+              bindtouchstart="onScorePressStart"
+              bindtouchend="onScorePressEnd"
+              bindtouchcancel="onScorePressEnd"
+              hover-class="score-btn-hover"
+              hover-stay-time="60"
+            >＋</view>
+          </view>
+        </view>
+
+        <view class="score-vs">
+          <text class="score-vs-text">VS</text>
+        </view>
+
+        <view class="score-side {{scoreWinner === 'team2' ? 'is-win' : ''}}">
+          <view class="score-side-head">
+            <block wx:for="{{scoreTeam2Avatars}}" wx:key="index">
+              <image class="score-avatar" src="{{item}}" mode="aspectFill" />
+            </block>
+            <text wx:if="{{scoreWinner === 'team2'}}" class="score-win-tag">胜</text>
+          </view>
+          <view class="score-side-num {{scoreWinner === 'team2' ? 'is-win' : ''}}">{{scoreRight}}</view>
+          <view class="score-side-ctrl">
+            <view
+              class="score-btn"
+              data-side="team2"
+              data-dir="-1"
+              bindtap="onScoreStep"
+              bindtouchstart="onScorePressStart"
+              bindtouchend="onScorePressEnd"
+              bindtouchcancel="onScorePressEnd"
+              hover-class="score-btn-hover"
+              hover-stay-time="60"
+            >−</view>
+            <view
+              class="score-btn score-btn--plus {{scorePressing === 'team2' ? 'is-pressing' : ''}}"
+              data-side="team2"
+              data-dir="1"
+              bindtap="onScoreStep"
+              bindtouchstart="onScorePressStart"
+              bindtouchend="onScorePressEnd"
+              bindtouchcancel="onScorePressEnd"
+              hover-class="score-btn-hover"
+              hover-stay-time="60"
+            >＋</view>
+          </view>
+        </view>
+      </view>
+
+      <view class="score-hint {{scoreWinner ? 'score-hint--win' : ''}}">
+        {{scoreWinnerText || '点 ＋ 记 1 分，长按 ＋ 可连续加分'}}
+      </view>
+
+      <view class="score-footer">
+        <button class="score-btn-ghost" bindtap="onScoreReset" disabled="{{scoreSaving}}">清零</button>
+        <button
+          class="score-btn-primary"
+          bindtap="onScoreSave"
+          loading="{{scoreSaving}}"
+          disabled="{{scoreSaving}}"
+        >{{scoreSaved ? '更新比分' : '保存比分'}}</button>
+      </view>
+
+      <view wx:if="{{scoreCanUndo}}" class="score-undo" bindtap="onScoreUndo">撤销这场比分</view>
     </view>
   </view>
 
@@ -313,7 +503,7 @@
       <view class="invite-club-head">
         <text class="invite-club-title">邀请俱乐部成员</text>
         <text class="invite-club-sub">{{inviteClubName}}</text>
-        <text class="invite-club-tip">最多可选 {{inviteSlotsMax}} 人（计划 {{match.capacity}} 人，已报 {{match.joined}} 人）</text>
+        <text class="invite-club-tip">{{inviteTip}}</text>
       </view>
 
       <view wx:if="{{inviteClubLoading}}" class="invite-club-loading">加载中...</view>
@@ -361,7 +551,7 @@
 
       <view wx:if="{{!inviteClubLoading}}" class="invite-club-footer">
         <button class="invite-club-btn invite-club-btn--ghost" bindtap="onCloseInviteClubModal">取消</button>
-        <button class="invite-club-btn invite-club-btn--primary" bindtap="onConfirmInviteClub">确定邀请</button>
+        <button class="invite-club-btn invite-club-btn--primary" bindtap="onConfirmInviteClub">确定邀请<text wx:if="{{inviteSelected}}">（{{inviteSelected}} 人）</text></button>
       </view>
     </view>
   </view>

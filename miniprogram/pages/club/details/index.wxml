@@ -60,7 +60,7 @@
         class="tab-item {{activeTab === 'feed' ? 'is-active' : ''}}"
         bindtap="onTabFeed"
       >
-        动态 ({{feedCount}})
+        动态{{feedCount > 0 ? ' (' + feedCount + ')' : ''}}
       </view>
     </view>
   </view>
@@ -95,10 +95,75 @@
     </view>
   </view>
 
-  <view wx:if="{{activeTab === 'feed'}}" class="feed-placeholder">
-    <van-icon name="chat-o" size="48" color="rgba(10,143,62,0.35)" />
-    <view class="feed-title">动态</view>
-    <view class="feed-desc">俱乐部动态功能开发中，敬请期待。</view>
+  <!-- 动态：自动生成的时间轴，无需成员发帖 -->
+  <view wx:if="{{activeTab === 'feed'}}" class="feed-wrap">
+    <view wx:if="{{feedNeedJoin}}" class="feed-placeholder">
+      <van-icon name="lock" size="48" color="rgba(10,143,62,0.35)" />
+      <view class="feed-title">加入后可查看动态</view>
+      <view class="feed-desc">成员才能看到这里的比赛记录和成员动态</view>
+    </view>
+
+    <view wx:elif="{{!feedLoaded}}" class="feed-placeholder">
+      <view class="feed-title">动态加载中...</view>
+    </view>
+
+    <view wx:elif="{{feedList.length === 0}}" class="feed-placeholder">
+      <block wx:if="{{feedError}}">
+        <van-icon name="warning-o" size="48" color="rgba(217,134,10,0.5)" />
+        <view class="feed-title">{{feedError}}</view>
+        <view class="feed-empty-btn" bindtap="onFeedRetry">重新加载</view>
+      </block>
+      <block wx:else>
+        <van-icon name="chat-o" size="48" color="rgba(10,143,62,0.35)" />
+        <view class="feed-title">还没有动态</view>
+        <view class="feed-desc">发起第一场比赛后，赛事战报、成员加入都会自动记录在这里</view>
+        <view wx:if="{{canInvite || hasJoined}}" class="feed-empty-btn" bindtap="onFeedCreateMatch">发起第一场球局</view>
+      </block>
+    </view>
+
+    <view wx:else class="feed-list">
+      <view
+        wx:for="{{feedList}}"
+        wx:key="id"
+        class="feed-item"
+        data-match-id="{{item.matchId}}"
+        data-member-open-id="{{item.memberOpenId}}"
+        bindtap="onTapFeed"
+        hover-class="feed-item-hover"
+      >
+        <view class="feed-rail">
+          <view class="feed-dot feed-dot--{{item.tone}}">
+            <van-icon name="{{item.icon}}" size="16" color="#ffffff" />
+          </view>
+          <view wx:if="{{index < feedList.length - 1}}" class="feed-line"></view>
+        </view>
+        <view class="feed-card">
+          <view class="feed-card-head">
+            <text class="feed-title-text">{{item.title}}</text>
+            <text class="feed-time">{{item.timeText}}</text>
+          </view>
+          <view wx:if="{{item.desc}}" class="feed-desc-text">{{item.desc}}</view>
+          <view class="feed-card-foot">
+            <view class="feed-avatars">
+              <image
+                wx:for="{{item.avatars}}"
+                wx:for-item="av"
+                wx:for-index="avIndex"
+                wx:key="avIndex"
+                class="feed-avatar"
+                src="{{av}}"
+                mode="aspectFill"
+              />
+            </view>
+            <text class="feed-tag feed-tag--{{item.tone}}">{{item.tagText}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="feed-more">
+        {{feedLoading ? '加载中...' : (feedHasMore ? '上拉加载更多' : '没有更多了')}}
+      </view>
+    </view>
   </view>
 
   <view wx:if="{{isShareMode}}" class="page-footer">

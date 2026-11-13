@@ -31,7 +31,7 @@
       hover-class="member-card-hover"
     >
       <view class="member-avatar member-avatar--{{item.tone}}">
-        <image wx:if="{{item.avatarUrl}}" class="member-avatar-img" src="{{item.avatarUrl}}" mode="aspectFill" />
+        <image wx:if="{{item.avatarUrl}}" class="member-avatar-img" src="{{item.avatarUrl}}" mode="aspectFill" lazy-load />
         <text wx:else>{{item.abbr}}</text>
       </view>
       <view class="member-main">

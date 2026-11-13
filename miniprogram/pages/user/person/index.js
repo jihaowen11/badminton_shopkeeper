@@ -1,14 +1,10 @@
 // pages/user/person/index.js
 const { FIND_USER, USER_STATS } = require('../../../request/api')
 const { whenLoginReady, pickOpenId } = require('../../../utils/auth')
+const { toText } = require('../../../utils/format')
+const { toAvatarUrl } = require('../../../utils/static')
 const { mapRecentMatches, formatStats } = require('../../../utils/matchView')
-
-const DEFAULT_AVATAR = '/images/noheader.jpg'
-
-function toText(v, fallback = '') {
-  const s = v == null ? '' : String(v).trim()
-  return s || fallback
-}
+const { createScrollSync } = require('../../../utils/scrollSync')
 
 function toGender(gender) {
   const g = Number(gender)
@@ -23,18 +19,6 @@ function formatJoinDate(createdAt) {
   const d = new Date(raw)
   if (Number.isNaN(d.getTime())) return ''
   return `${d.getFullYear()}年${d.getMonth() + 1}月加入`
-}
-
-function toAvatarUrl(rawAvatar) {
-  const path = rawAvatar == null ? '' : String(rawAvatar).trim()
-  if (!path) return DEFAULT_AVATAR
-  try {
-    const app = getApp()
-    if (app && app.fun && typeof app.fun.joinStaticUrl === 'function') {
-      return app.fun.joinStaticUrl(path)
-    }
-  } catch (e) {}
-  return path || DEFAULT_AVATAR
 }
 
 /** 资料来自用户表，战绩来自排期聚合，两者分开算最后合并 */
@@ -114,12 +98,7 @@ Page({
     wx.navigateTo({ url: `/pages/match/details/index?id=${matchId}` })
   },
 
-  onPageScroll(e) {
-    const st = e && typeof e.scrollTop === 'number' ? e.scrollTop : 0
-    if (st !== this.data.pageScrollTop) {
-      this.setData({ pageScrollTop: st })
-    }
-  },
+  onPageScroll: createScrollSync('pageScrollTop', 10),
 
   onShareAppMessage() {
     const openId = toText(this.data.openId)

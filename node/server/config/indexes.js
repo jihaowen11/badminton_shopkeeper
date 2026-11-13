@@ -17,6 +17,9 @@ const INDEXES = [
     { table: 'matches', name: 'idx_matches_created_by', fields: ['created_by'] },
     { table: 'matches', name: 'idx_matches_club_status', fields: ['club_id', 'status'] },
     { table: 'matches', name: 'idx_matches_start_time', fields: ['start_time'] },
+    // 垃圾数据回收：按「状态 + 时间」扫超期比赛（报名中>30天、已取消>3天）
+    { table: 'matches', name: 'idx_matches_status_created', fields: ['status', 'createdAt'] },
+    { table: 'matches', name: 'idx_matches_status_updated', fields: ['status', 'updatedAt'] },
 
     // 报名表：按用户查"我参加过的比赛"，按 (比赛, 用户) 查重与排序
     { table: 'match_participants', name: 'idx_mp_user', fields: ['user_id'] },
@@ -38,6 +41,9 @@ const INDEXES = [
 
     // 俱乐部列表：按创建者查
     { table: 'clubs', name: 'idx_clubs_creator', fields: ['creator'] },
+
+    // 单局比分：按比赛 + 局号取
+    { table: 'match_scores', name: 'idx_ms_match_game', fields: ['match_id', 'game_number'] },
 ];
 
 const RETRY_DELAY_MS = 3000;

@@ -6,8 +6,9 @@ const MatchParticipantModel = require('./matchParticipants');
 const UserModel = require('./users');
 const ClubModel = require('./clubs');
 const ClubMemberModel = require('./clubMembers');
+const { safeSync } = require('../utils/safeSync');
 
-matches.sync({ force: false });
+safeSync(matches, 'matches');
 
 function pickCreatorOpenId(data) {
     if (!data) return '';
@@ -130,13 +131,17 @@ class MatchModel {
         const match = matchRow.get({ plain: true });
 
         const createdBy = match.createdBy != null ? String(match.createdBy).trim() : '';
-        let organizer = null;
-        if (createdBy) {
-            const map = await UserModel.mapProfileByOpenIds([createdBy]);
-            organizer = map.get(createdBy) || null;
-        }
+        const cid = match.clubId != null && match.clubId !== '' ? Number(match.clubId) : NaN;
 
-        const partRows = await MatchParticipantModel.listByMatchIds([id]);
+        // 组织者、报名人员、俱乐部三者互不依赖，并行取，少两个往返
+        const [organizerMap, partRows, clubMap] = await Promise.all([
+            createdBy ? UserModel.mapProfileByOpenIds([createdBy]) : Promise.resolve(new Map()),
+            MatchParticipantModel.listByMatchIds([id]),
+            Number.isFinite(cid) ? ClubModel.mapPlainByIds([cid]) : Promise.resolve(new Map()),
+        ]);
+
+        const organizer = createdBy ? organizerMap.get(createdBy) || null : null;
+
         const plains = partRows.map((r) => r.get({ plain: true }));
         const openIds = plains.map((p) => p.userId).filter(Boolean);
         const userMap = await UserModel.mapProfileByOpenIds(openIds);
@@ -146,14 +151,7 @@ class MatchModel {
             return { ...p, user };
         });
 
-        let club = null;
-        if (match.clubId != null && match.clubId !== '') {
-            const cid = Number(match.clubId);
-            if (Number.isFinite(cid)) {
-                const clubMap = await ClubModel.mapPlainByIds([cid]);
-                club = clubMap.get(cid) || null;
-            }
-        }
+        const club = Number.isFinite(cid) ? clubMap.get(cid) || null : null;
 
         return { match, organizer, participants, club };
     }
@@ -189,13 +187,16 @@ class MatchModel {
             where = { ...baseWhere, [Op.or]: orConds };
         }
 
-        const total = await matches.count({ where });
-        const matchRows = await matches.findAll({
-            where,
-            order,
-            limit: pageSize,
-            offset,
-        });
+        // count 与取页互不依赖，并行走少一次往返
+        const [total, matchRows] = await Promise.all([
+            matches.count({ where }),
+            matches.findAll({
+                where,
+                order,
+                limit: pageSize,
+                offset,
+            }),
+        ]);
         const plains = matchRows.map((row) => row.get({ plain: true }));
         if (plains.length === 0) return { total, list: [], page, pageSize };
 
@@ -251,12 +252,12 @@ class MatchModel {
 
     /** 仅更新状态，返回更新后的比赛行；无该 id 返回 null */
     static async updateStatus(id, status) {
-        const exists = await matches.findOne({ where: { id }, attributes: ['id'] });
-        if (!exists) return null;
         const st = Number(status);
         if (!Number.isFinite(st)) {
             throw new Error('状态无效');
         }
+        // 先写再读：省掉"查存在"那一次往返。
+        // 不能用 affectedRows 判断存在性——状态值没变化时 MySQL 的 affected 就是 0。
         await matches.update({ status: st }, { where: { id } });
         return await matches.findOne({ where: { id } });
     }
@@ -319,10 +320,20 @@ class MatchModel {
             const created = [];
             const skipped = [];
 
+            // 名额以计划人数为准；前端只能拦住一次勾选，
+            // 抓包直接传 20 个 openId 时这里必须兜住，否则比赛人数能无限超。
+            const capacity = Number(match.playerCount || 0);
+            const free = capacity > 0 ? Math.max(0, capacity - existingParts.length) : Infinity;
+
             for (const openId of ids) {
                 // 已报名的人直接在内存里判断，不再逐条查库
                 if (joinedSet.has(openId)) {
                     skipped.push({ openId, reason: '已报名' });
+                    continue;
+                }
+
+                if (created.length >= free) {
+                    skipped.push({ openId, reason: '名额已满' });
                     continue;
                 }
 

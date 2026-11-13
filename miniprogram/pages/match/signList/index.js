@@ -1,38 +1,9 @@
 // pages/match/signList/index.js
 const { MATCH_DES, MATCH_PARTICIPANT_DELETE } = require('../../../request/api')
-
-function toText(v, fallback = '') {
-  const s = v == null ? '' : String(v).trim()
-  return s || fallback
-}
-
-function pickOpenId() {
-  try {
-    const app = getApp()
-    const gd = (app && app.globalData) || {}
-    return (
-      (gd.openid && String(gd.openid).trim()) ||
-      (gd.userInfo &&
-        (gd.userInfo.openId || gd.userInfo.openid || gd.userInfo.openID) &&
-        String(gd.userInfo.openId || gd.userInfo.openid || gd.userInfo.openID).trim()) ||
-      ''
-    )
-  } catch (e) {
-    return ''
-  }
-}
-
-function toAvatarUrl(rawAvatar) {
-  const path = toText(rawAvatar)
-  if (!path) return ''
-  try {
-    const app = getApp()
-    if (app && app.fun && typeof app.fun.joinStaticUrl === 'function') {
-      return app.fun.joinStaticUrl(path)
-    }
-  } catch (e) {}
-  return path
-}
+const { pickOpenId } = require('../../../utils/auth')
+const { toText } = require('../../../utils/format')
+const { toStaticUrl } = require('../../../utils/static')
+const { createScrollSync } = require('../../../utils/scrollSync')
 
 function mapParticipantsToView(participants, organizerOpenId) {
   const tones = ['green', 'blue', 'pink', 'orange']
@@ -48,7 +19,7 @@ function mapParticipantsToView(participants, organizerOpenId) {
       name,
       abbr: name.slice(0, 1),
       tone: tones[idx % tones.length],
-      avatarUrl: toAvatarUrl((user && user.avatar) || p.userAvatar),
+      avatarUrl: toStaticUrl((user && user.avatar) || p.userAvatar),
       isOrganizer: !!orgId && openId === orgId,
     }
   })
@@ -83,12 +54,7 @@ Page({
     this.fetchSignList()
   },
 
-  onPageScroll(e) {
-    const st = e && typeof e.scrollTop === 'number' ? e.scrollTop : 0
-    if (st !== this.data.pageScrollTop) {
-      this.setData({ pageScrollTop: st })
-    }
-  },
+  onPageScroll: createScrollSync('pageScrollTop', 10),
 
   fetchSignList() {
     const matchId = toText(this.data.matchId)
